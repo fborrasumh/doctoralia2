@@ -239,9 +239,9 @@ textarea{resize:vertical;min-height:68px}
 .section-actions{display:flex;gap:6px;align-items:center}
 .section-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px;background:#ffffff;margin-bottom:8px}
 .section-body textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--ff);font-size:13px;line-height:1.7;resize:vertical;min-height:120px;outline:none;padding:0}
-.regen-panel{background:#fefce8;border:1px solid #d4a060;border-radius:var(--r);padding:12px;margin-top:8px;display:none}
+.regen-panel{background:#f8faff;border:1px solid #c7d7f8;border-radius:var(--rl);padding:14px;margin-top:8px;display:none;box-shadow:0 2px 8px rgba(37,99,235,.07)}
 .regen-panel.open{display:block}
-.regen-panel textarea{width:100%;background:#f7f8fa;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--ff);font-size:12px;padding:7px 10px;resize:none;height:56px;outline:none}
+.regen-panel textarea{width:100%;background:#ffffff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--ff);font-size:13px;padding:9px 12px;resize:vertical;outline:none;line-height:1.5}
 .regen-panel textarea:focus{border-color:var(--accent)}
 
 /* ── STATS ── */
@@ -298,12 +298,13 @@ textarea{resize:vertical;min-height:68px}
 .topic-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:var(--accent);cursor:pointer;transition:all .15s;user-select:none}
 .topic-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* ── Graphical Abstract Charts ─────────────────────────────── */
-.chart-card{background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--shadow);margin-bottom:14px}
-.chart-card-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.chart-wrap{position:relative;height:160px}
-.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-@media(max-width:860px){.charts-row{grid-template-columns:1fr}}
+
+/* ── Agent model selector ──────────────────────────────────── */
+.model-sel{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:#fff;color:var(--t2);cursor:pointer;font-family:var(--ff)}
+.model-sel.is-4o{border-color:var(--accent);color:var(--accent);background:#eff6ff}
+.model-badge{font-size:10px;padding:2px 6px;border-radius:8px;font-weight:500;display:inline-block}
+.mb-mini{background:rgba(5,150,105,.1);color:var(--teal)}
+.mb-4o{background:rgba(37,99,235,.12);color:var(--accent)}
 
 /* ── Scopus source card ─────────────────────────────────────── */
 .scopus-key-field{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
@@ -659,16 +660,9 @@ textarea{resize:vertical;min-height:68px}
         </div>
       </div>
     </div>
-
-  <!-- GRAPHICAL ABSTRACT: Pipeline charts (outside wizard steps, always visible when tc-wizard active) -->
-  <div id="pipelineChartsRow" class="charts-row" style="display:none;padding:0 28px 20px">
-    <div class="chart-card">
-      <div class="chart-card-title">📊 Publicaciones por año</div>
-      <div class="chart-wrap"><canvas id="chartYear" width="400" height="160"></canvas></div>
-    </div>
-    <div class="chart-card">
+<div class="chart-card">
       <div class="chart-card-title">🌐 Distribución por fuente</div>
-      <div class="chart-wrap"><canvas id="chartSrc" width="400" height="160"></canvas></div>
+      <div class="chart-wrap"></div>
     </div>
   </div>
 
@@ -690,16 +684,9 @@ textarea{resize:vertical;min-height:68px}
       <div class="qb-item">⏱ <strong id="qbTime">—</strong></div>
       <div class="qb-item" id="partialBadge" style="display:none">⚠️ <strong style="color:var(--amber)">Borrador parcial guardado</strong></div>
     </div>
-
-    <!-- GRAPHICAL ABSTRACT: Output charts -->
-    <div id="outputChartsRow" class="charts-row" style="display:none;margin-top:4px;margin-bottom:8px">
-      <div class="chart-card">
-        <div class="chart-card-title">📝 Palabras por sección</div>
-        <div class="chart-wrap"><canvas id="chartSections" width="400" height="160"></canvas></div>
-      </div>
-      <div class="chart-card">
+<div class="chart-card">
         <div class="chart-card-title">🔓 Open Access ratio</div>
-        <div class="chart-wrap" style="height:140px"><canvas id="chartOA" width="400" height="140"></canvas></div>
+        <div class="chart-wrap" style="height:140px"></div>
       </div>
     </div>
 
@@ -717,14 +704,7 @@ textarea{resize:vertical;min-height:68px}
 
   <!-- ══════ PANEL: GAPS ══════ -->
   <div class="tc content" id="tc-gaps">
-
-    <!-- GRAPHICAL ABSTRACT: top cited papers -->
-    <div id="gapsChartRow" class="charts-row" style="display:none;grid-template-columns:1fr;margin-bottom:16px">
-      <div class="chart-card">
-        <div class="chart-card-title">🏆 Top papers por citas</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="chartTopCites" width="600" height="200"></canvas></div>
-      </div>
-    </div>
+</div>
 
     <div id="gapsArea">
       <div class="placeholder"><div class="bi">🔍</div><p>Los gaps detectados por el agente <strong>gap_detector</strong> aparecerán aquí.</p></div>
@@ -746,9 +726,16 @@ textarea{resize:vertical;min-height:68px}
 
   <!-- ══════ PANEL: AGENTS ══════ -->
   <div class="tc content" id="tc-agents">
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--t2);margin-bottom:14px">
+      <strong style="color:var(--accent)">💡 Propuesta de modelos por agente:</strong>
+      &nbsp;<span style="background:rgba(37,99,235,.12);color:var(--accent);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:500">gpt-4o</span>
+      para <strong>crafter</strong>, <strong>polish</strong>, <strong>enhancer</strong>, <strong>narrator</strong> — redacción y edición donde la calidad es crítica.
+      &nbsp;<span style="background:rgba(5,150,105,.1);color:var(--teal);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:500">gpt-4o-mini</span>
+      para el resto: análisis, planificación y validación, donde velocidad y coste importan más.
+    </div>
     <div class="ibox"><span>ℹ️</span><span>Configura el máximo de tokens por agente. Más tokens = respuestas más largas, mayor coste. Valores del notebook original como referencia.</span></div>
     <div class="sh">🤖 Todos los agentes del pipeline <button onclick="resetAgentDefaults()">↺ Restaurar defaults</button></div>
-    <div class="at-wrap"><table class="at"><thead><tr><th style="width:150px">Agente</th><th style="width:110px">Fase</th><th>Rol</th><th style="width:90px">Max tokens</th></tr></thead><tbody id="agentTbody"></tbody></table></div>
+    <div class="at-wrap"><table class="at"><thead><tr><th style="width:150px">Agente</th><th style="width:110px">Fase</th><th>Rol</th><th style="width:110px">Modelo</th><th style="width:90px">Max tokens</th></tr></thead><tbody id="agentTbody"></tbody></table></div>
     <div class="divider"></div>
     <div class="sh">🌡️ Parámetros globales</div>
     <div class="form-grid" style="max-width:520px">
@@ -812,26 +799,26 @@ textarea{resize:vertical;min-height:68px}
 //  AGENT DEFINITIONS
 // ═══════════════════════════════════════════════════
 const AGENTS=[
-  {id:'scout',phase:'1 – Research',badge:'b-r',role:'Research Scout — genera queries y preguntas de investigación',def:1000},
-  {id:'signal',phase:'1 – Research',badge:'b-r',role:'Citation Finder — rankea papers por relevancia y clusters temáticos',def:3000},
-  {id:'scribe',phase:'1 – Research',badge:'b-r',role:'State of Art Reviewer — revisión base comprehensiva (≈7500 words)',def:7500},
-  {id:'data_analyst',phase:'1 – Research',badge:'b-r',role:'Academic Trend Analyzer — bibliometría y tendencias temporales',def:2000},
-  {id:'gap_detector',phase:'1 – Research',badge:'b-r',role:'Research Gap Identifier — brechas en literatura (PRISMA)',def:2000},
-  {id:'architect',phase:'2 – Structure',badge:'b-w',role:'Document Architect — estructura y distribución de palabras',def:2000},
-  {id:'crafter',phase:'3 – Writing',badge:'b-w',role:'Academic Section Writer — redacta cada sección individualmente',def:4000},
-  {id:'thread',phase:'3 – Writing',badge:'b-w',role:'Coherence Checker — revisa transiciones entre secciones',def:800},
-  {id:'narrator',phase:'3 – Writing',badge:'b-w',role:'Voice Refiner — mejora estilo académico y fluidez',def:3000},
-  {id:'skeptic',phase:'4 – Validation',badge:'b-v',role:'Fact Checker — detecta afirmaciones sin cita',def:800},
-  {id:'verifier',phase:'4 – Validation',badge:'b-v',role:'Citation Validator — verifica coherencia citas/referencias',def:800},
-  {id:'referee',phase:'4 – Validation',badge:'b-v',role:'Peer Reviewer — puntúa rigor, cobertura, claridad (1-5)',def:800},
-  {id:'polish',phase:'5 – Polish',badge:'b-p',role:'Final Editor — gramática, terminología, voz pasiva',def:3000},
-  {id:'enhancer',phase:'5 – Polish',badge:'b-p',role:'Publication Enhancer — abstract 250w + keywords + highlights',def:2000},
-  {id:'entropy',phase:'5 – Polish',badge:'b-p',role:'Originality Checker — puntúa originalidad del texto (1-10)',def:500},
-  {id:'methodology',phase:'Auxiliar',badge:'b-a',role:'Methodology Designer — sección PRISMA sistemática',def:1500},
-  {id:'results_synthesizer',phase:'Auxiliar',badge:'b-a',role:'Findings Synthesizer — síntesis ejecutiva 5-7 bullets',def:1500},
-  {id:'conclusion_writer',phase:'Auxiliar',badge:'b-a',role:'Conclusion Writer — conclusiones 400-500 palabras',def:1500},
-  {id:'voice',phase:'Auxiliar',badge:'b-a',role:'Tone Optimizer — adapta texto para audiencias específicas',def:2000},
-  {id:'formatter',phase:'Auxiliar',badge:'b-a',role:'Academic Formatter — aplica guías de estilo IEEE/APA/ACM',def:2000},
+  {id:'scout',phase:'1 – Research',badge:'b-r',role:'Research Scout — genera queries y preguntas de investigación',def:1000,model:'gpt-4o-mini'},
+  {id:'signal',phase:'1 – Research',badge:'b-r',role:'Citation Finder — rankea papers por relevancia y clusters temáticos',def:3000,model:'gpt-4o-mini'},
+  {id:'scribe',phase:'1 – Research',badge:'b-r',role:'State of Art Reviewer — revisión base comprehensiva (≈7500 words)',def:7500,model:'gpt-4o-mini'},
+  {id:'data_analyst',phase:'1 – Research',badge:'b-r',role:'Academic Trend Analyzer — bibliometría y tendencias temporales',def:2000,model:'gpt-4o-mini'},
+  {id:'gap_detector',phase:'1 – Research',badge:'b-r',role:'Research Gap Identifier — brechas en literatura (PRISMA)',def:2000,model:'gpt-4o-mini'},
+  {id:'architect',phase:'2 – Structure',badge:'b-w',role:'Document Architect — estructura y distribución de palabras',def:2000,model:'gpt-4o-mini'},
+  {id:'crafter',phase:'3 – Writing',badge:'b-w',role:'Academic Section Writer — redacta cada sección individualmente',def:4000,model:'gpt-4o'},
+  {id:'thread',phase:'3 – Writing',badge:'b-w',role:'Coherence Checker — revisa transiciones entre secciones',def:800,model:'gpt-4o-mini'},
+  {id:'narrator',phase:'3 – Writing',badge:'b-w',role:'Voice Refiner — mejora estilo académico y fluidez',def:3000,model:'gpt-4o'},
+  {id:'skeptic',phase:'4 – Validation',badge:'b-v',role:'Fact Checker — detecta afirmaciones sin cita',def:800,model:'gpt-4o-mini'},
+  {id:'verifier',phase:'4 – Validation',badge:'b-v',role:'Citation Validator — verifica coherencia citas/referencias',def:800,model:'gpt-4o-mini'},
+  {id:'referee',phase:'4 – Validation',badge:'b-v',role:'Peer Reviewer — puntúa rigor, cobertura, claridad (1-5)',def:800,model:'gpt-4o-mini'},
+  {id:'polish',phase:'5 – Polish',badge:'b-p',role:'Final Editor — gramática, terminología, voz pasiva',def:3000,model:'gpt-4o'},
+  {id:'enhancer',phase:'5 – Polish',badge:'b-p',role:'Publication Enhancer — abstract 250w + keywords + highlights',def:2000,model:'gpt-4o'},
+  {id:'entropy',phase:'5 – Polish',badge:'b-p',role:'Originality Checker — puntúa originalidad del texto (1-10)',def:500,model:'gpt-4o-mini'},
+  {id:'methodology',phase:'Auxiliar',badge:'b-a',role:'Methodology Designer — sección PRISMA sistemática',def:1500,model:'gpt-4o-mini'},
+  {id:'results_synthesizer',phase:'Auxiliar',badge:'b-a',role:'Findings Synthesizer — síntesis ejecutiva 5-7 bullets',def:1500,model:'gpt-4o-mini'},
+  {id:'conclusion_writer',phase:'Auxiliar',badge:'b-a',role:'Conclusion Writer — conclusiones 400-500 palabras',def:1500,model:'gpt-4o-mini'},
+  {id:'voice',phase:'Auxiliar',badge:'b-a',role:'Tone Optimizer — adapta texto para audiencias específicas',def:2000,model:'gpt-4o-mini'},
+  {id:'formatter',phase:'Auxiliar',badge:'b-a',role:'Academic Formatter — aplica guías de estilo IEEE/APA/ACM',def:2000,model:'gpt-4o-mini'},
 ];
 
 // ═══════════════════════════════════════════════════
@@ -913,8 +900,6 @@ function showMain(name){
   document.getElementById('topbarTitle').textContent=m.title||name;
   document.getElementById('topbarSub').textContent=m.sub||'';
   if(name==='history')renderHistory();
-  if(name==='gaps'&&window._pendingGapsChart){setTimeout(()=>renderGapsChart(window._pendingGapsChart),200);window._pendingGapsChart=null;}
-  setTimeout(resizeAllCharts, 250);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1053,11 +1038,31 @@ function syncLim(id,v){const el=document.getElementById('lim-'+id);if(el)el.valu
 // ═══════════════════════════════════════════════════
 function buildAgentTable(){
   document.getElementById('agentTbody').innerHTML=AGENTS.map(a=>{
-    const saved=localStorage.getItem('dtok_'+a.id);const v=saved?parseInt(saved):a.def;
-    return `<tr><td><strong>${a.id}</strong></td><td><span class="badge ${a.badge}">${a.phase}</span></td><td style="color:var(--t2);font-size:11px">${a.role}</td><td><input type="number" id="tok_${a.id}" value="${v}" min="100" max="16000" step="100" onchange="localStorage.setItem('dtok_${a.id}',this.value)"></td></tr>`;
+    const savedTok=localStorage.getItem('dtok_'+a.id);const v=savedTok?parseInt(savedTok):a.def;
+    const savedModel=localStorage.getItem('dmod_'+a.id)||a.model||'gpt-4o-mini';
+    const is4o=savedModel==='gpt-4o';
+    const badgeCls=is4o?'mb-4o':'mb-mini';
+    const badgeTxt=is4o?'gpt-4o':'4o-mini';
+    return `<tr>
+      <td><strong>${a.id}</strong><br><span class="model-badge ${badgeCls}">${badgeTxt}</span></td>
+      <td><span class="badge ${a.badge}">${a.phase}</span></td>
+      <td style="color:var(--t2);font-size:11px">${a.role}</td>
+      <td>
+        <select class="model-sel${is4o?' is-4o':''}" id="mod_${a.id}"
+          onchange="saveAgentModel('${a.id}',this.value);this.classList.toggle('is-4o',this.value==='gpt-4o');buildAgentTable()">
+          <option value="gpt-4o-mini"${savedModel==='gpt-4o-mini'?' selected':''}>gpt-4o-mini</option>
+          <option value="gpt-4o"${savedModel==='gpt-4o'?' selected':''}>gpt-4o</option>
+          <option value="gpt-4-turbo"${savedModel==='gpt-4-turbo'?' selected':''}>gpt-4-turbo</option>
+          <option value="gpt-3.5-turbo"${savedModel==='gpt-3.5-turbo'?' selected':''}>gpt-3.5-turbo</option>
+        </select>
+      </td>
+      <td><input type="number" id="tok_${a.id}" value="${v}" min="100" max="16000" step="100" onchange="localStorage.setItem('dtok_${a.id}',this.value)"></td>
+    </tr>`;
   }).join('');
 }
-function resetAgentDefaults(){AGENTS.forEach(a=>{localStorage.removeItem('dtok_'+a.id);const el=document.getElementById('tok_'+a.id);if(el)el.value=a.def;});log('↺ Tokens restaurados.','warn');}
+function saveAgentModel(id,model){localStorage.setItem('dmod_'+id,model);}
+function getAgentModel(id){return localStorage.getItem('dmod_'+id)||AGENTS.find(a=>a.id===id)?.model||'gpt-4o-mini';}
+function resetAgentDefaults(){AGENTS.forEach(a=>{localStorage.removeItem('dtok_'+a.id);localStorage.removeItem('dmod_'+a.id);const el=document.getElementById('tok_'+a.id);if(el)el.value=a.def;});buildAgentTable();log('↺ Tokens y modelos restaurados.','warn');}
 function getTokens(id){const el=document.getElementById('tok_'+id);if(el)return parseInt(el.value)||1000;return AGENTS.find(a=>a.id===id)?.def||1000;}
 
 // ═══════════════════════════════════════════════════
@@ -1076,8 +1081,8 @@ function setPhase(n,s){const el=document.getElementById('ph'+n);if(!el)return;el
 // ═══════════════════════════════════════════════════
 //  OPENAI CALL
 // ═══════════════════════════════════════════════════
-async function callAI(apiKey,messages,maxTokens=1500,temp=0.7){
-  const model=document.getElementById('model').value;
+async function callAI(apiKey,messages,maxTokens=1500,temp=0.7,modelOverride=null){
+  const model=modelOverride||document.getElementById('model').value;
   const retries=parseInt(document.getElementById('maxRetries').value)||3;
   for(let attempt=0;attempt<retries;attempt++){
     if(shouldStop)throw new Error('__STOPPED__');
@@ -1134,8 +1139,6 @@ function loadDraft(){
     allPapersStore=d.papers||[];
     gapsStore=d.gaps||'';
     renderOutputSections(sectionTextsStore,d.papers||[],d.gaps||'',d.meta||{});
-    setTimeout(()=>{renderOutputCharts(sectionTextsStore,d.papers||[]);},300);
-    if((d.papers||[]).length) window._pendingGapsChart=d.papers;
     document.getElementById('partialBadge').style.display='flex';
     document.getElementById('qualityBar').style.display='flex';
     document.getElementById('exportRow').style.display='flex';
@@ -1197,7 +1200,6 @@ function loadFromHistory(i){
     gapsStore=h.gaps||'';
     if(Object.keys(sectionTextsStore).length){
       renderOutputSections(sectionTextsStore,allPapersStore,gapsStore,{time:h.time,score:'—'});
-      setTimeout(()=>{renderOutputCharts(sectionTextsStore,allPapersStore);if(allPapersStore.length)renderGapsChart(allPapersStore);},150);
     } else {
       showMain('output');
       document.getElementById('outputArea').innerHTML='';
@@ -1337,11 +1339,19 @@ function renderOutputSections(sections,papers,gaps,meta){
       <div class="section-body">
         <textarea oninput="updateSectionText('${title}',this.value)">${content}</textarea>
         <div class="regen-panel" id="rp-${title.replace(/\s+/g,'_')}">
-          <div style="font-size:12px;color:var(--amber);margin-bottom:6px">🔄 Reescribir "${title}"</div>
-          <textarea placeholder="Feedback opcional: hazla más corta, añade ejemplos clínicos, enfoca en metodología..."></textarea>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn btn-amber" style="font-size:12px;padding:5px 12px" onclick="regenSection('${title}',this)">Regenerar</button>
-            <button class="btn-ghost" onclick="this.closest('.regen-panel').classList.remove('open')">Cancelar</button>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:15px">🤖</span>
+            <span style="font-size:12px;font-weight:500;color:var(--text)">Instrucción al agente <strong>crafter</strong></span>
+            <span style="margin-left:auto;font-size:10px;background:rgba(37,99,235,.1);color:var(--accent);padding:2px 7px;border-radius:8px" id="rp-model-${title.replace(/\s+/g,'_')}">${getAgentModel('crafter')}</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px">Dile al agente exactamente cómo reescribir esta sección:</div>
+          <textarea class="regen-chat-input" placeholder="Ej: Hazla más concisa (máx. 400 palabras), enfocada en ensayos clínicos RCT, con tono más formal y sin repeticiones..." style="height:72px;resize:vertical"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <button class="btn btn-amber" style="font-size:12px;padding:6px 14px;display:flex;align-items:center;gap:5px" onclick="regenSection('${title}',this)">
+              <span>▶</span> Reescribir sección
+            </button>
+            <button class="btn-ghost" onclick="this.closest('.regen-panel').classList.remove('open')">✕ Cancelar</button>
+            <span style="margin-left:auto;font-size:11px;color:var(--t3)">~<span class="regen-words-estimate">${content.split(/\s+/).length}</span> pal. actuales</span>
           </div>
         </div>
       </div>`;
@@ -1375,15 +1385,31 @@ async function regenSection(title,btn){
   const apiKey=document.getElementById('apiKey').value.trim();
   if(!apiKey){alert('Introduce tu API key primero.');return;}
   const rpanel=btn.closest('.regen-panel');
-  const feedback=rpanel.querySelector('textarea').value.trim();
-  const orig=btn.textContent;
-  btn.textContent='⏳...';btn.disabled=true;
+  const instruction=rpanel.querySelector('textarea').value.trim();
+  if(!instruction){
+    const ta=rpanel.querySelector('textarea');
+    ta.style.borderColor='var(--red)';ta.focus();
+    ta.placeholder='⚠️ Escribe una instrucción para el agente antes de continuar...';
+    setTimeout(()=>{ta.style.borderColor='';},2000);
+    return;
+  }
+  const orig=btn.innerHTML;
+  btn.innerHTML='<span class="pulsing">⏳</span> Reescribiendo...';btn.disabled=true;
+  // Show typing indicator in section body
+  const sectionBody=rpanel.closest('.section-body');
+  const existingTA=sectionBody?.querySelector('textarea');
+  if(existingTA) existingTA.style.opacity='0.4';
   try{
     const lang=document.getElementById('lang').value;
+    const regenModel=getAgentModel('crafter');
+    // Update model badge
+    const modelBadge=rpanel.querySelector('[id^="rp-model-"]');
+    if(modelBadge) modelBadge.textContent=regenModel;
+    const currentContent=sectionTextsStore[title]||'';
     const newContent=await callAI(apiKey,[
-      {role:'system',content:`You are an Academic Section Writer. Write in ${lang}.`},
-      {role:'user',content:`Rewrite the "${title}" section of a state-of-the-art review.\n${feedback?'User feedback: '+feedback+'\n':''}\nBase on this context:\n${fmt(allPapersStore,15)}\n\nWrite ~${Math.max(400,Math.floor(parseInt(document.getElementById('wc').value)/Object.keys(sectionTextsStore).length))} words. Academic tone. Cite as [Author et al., Year].`}
-    ],getTokens('crafter'),0.7);
+      {role:'system',content:`You are an Academic Section Writer for state-of-the-art reviews. Write in ${lang}. Follow user instructions precisely and completely. Return only the section text, no headers, no meta-commentary.`},
+      {role:'user',content:`USER INSTRUCTION: ${instruction}\n\nRewrite the "${title}" section of a state-of-the-art review following the instruction above EXACTLY.\n\nCurrent section content (for reference):\n${currentContent.slice(0,2000)}\n\nAvailable references:\n${fmt(allPapersStore,15)}\n\nWrite in academic tone. Cite as [Author et al., Year]. Follow the user instruction as the primary directive.`}
+    ],getTokens('crafter'),0.7,getAgentModel('crafter'));
     sectionTextsStore[title]=newContent;
     // Update textarea
     const textareas=document.querySelectorAll('.section-header');
@@ -1392,7 +1418,7 @@ async function regenSection(title,btn){
     rpanel.classList.remove('open');
     log(`✅ Sección "${title}" regenerada.`,'ok');
   }catch(e){log('❌ Regenerar: '+e.message,'err');}
-  finally{btn.textContent=orig;btn.disabled=false;}
+  finally{btn.innerHTML=orig;btn.disabled=false;if(existingTA)existingTA.style.opacity='';}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1465,7 +1491,7 @@ async function startGeneration(){
     log('🤖 Scout: planificando búsqueda...','info');
     let plan={research_questions:[],search_terms:[topic+(kw?' '+kw:'')],key_areas:[]};
     try{
-      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5);
+      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5,getAgentModel('scout'));
       plan=JSON.parse(raw.replace(/```json|```/g,'').trim());
       log(`✅ Scout: ${(plan.key_areas||[]).join(' · ')}`,'ok');
     }catch(e){log('⚠ Scout JSON fallido, usando query directa.','warn');}
@@ -1496,7 +1522,6 @@ async function startGeneration(){
     allPapersStore=allPapers;
     log(`📊 Total deduplicado: ${allPapers.length} papers`,'ok');
     // 📊 Render pipeline charts immediately after search
-    if(allPapers.length) renderPipelineCharts(allPapers);
 
     const papersFormatted=fmt(allPapers,topP);
 
@@ -1540,7 +1565,7 @@ async function startGeneration(){
     log('🏗️ ── FASE 2: STRUCTURE ──────────────────────','info');
     let structure={"Introduction":800,"Background":1200,"Current State of the Art":2000,"Methodological Approaches":1500,"Key Findings":1200,"Research Gaps and Future Directions":700,"Discussion":600,"Conclusion":500};
     try{
-      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5);
+      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5,getAgentModel('architect'));
       const parsed=JSON.parse(sr.replace(/```json|```/g,'').trim());
       if(typeof parsed==='object'&&Object.keys(parsed).length>3)structure=parsed;
       log(`✅ Architect: ${Object.keys(structure).join(' → ')}`,'ok');
@@ -1563,7 +1588,7 @@ async function startGeneration(){
         {role:'user',content:`Write the "${sec}" section.\nTopic: ${topic}\nTarget: ~${tgt} words\n${instruct?'Instructions: '+instruct+'\n':''}\nGaps:\n${gapsText?gapsText.slice(0,600):'N/A'}\n\nBase on:\n${mainReview}\n\nContext:\n${signalAnalysis}\n\nCite as [Author et al., Year].`}
       ],getTokens('crafter'),temp);
 
-      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3);}
+      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3,getAgentModel('thread'));}
 
       let finalText=text;
       try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
@@ -1586,12 +1611,12 @@ async function startGeneration(){
       const fullText=Object.values(sectionTexts).join('\n\n');
       const chunks=[];for(let i=0;i<fullText.length;i+=5000)chunks.push(fullText.slice(i,i+5000));
       for(let i=0;i<Math.min(chunks.length,3);i++){
-        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3);
-        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3);
+        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3,getAgentModel('skeptic'));
+        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3,getAgentModel('verifier'));
       }
       const scores=[];
       for(const[sec,txt]of Object.entries(sectionTexts)){
-        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3);
+        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3,getAgentModel('referee'));
         const m=rev.match(/OVERALL[:\s]+(\d+(?:\.\d+)?)\s*\/\s*5/i);if(m)scores.push(parseFloat(m[1]));
       }
       if(scores.length){const avg=scores.reduce((a,b)=>a+b,0)/scores.length;qs=`${Math.round(avg/5*100)}/100 (avg ${avg.toFixed(1)}/5)`;log(`📊 Quality Score: ${qs}`,'ok');}
@@ -1663,8 +1688,6 @@ async function startGeneration(){
       const gl=document.createElement('div');gl.className='gaps-list fi';
       gapsText.split(/\nGAP \[?\d+\]?:/i).filter(Boolean).forEach((g,i)=>{const lines=g.trim().split('\n');const card=document.createElement('div');card.className='gap-card';card.innerHTML=`<h4>GAP ${i+1}: ${lines[0].replace(/^[:.\s]+/,'').trim()}</h4><p>${lines.slice(1).join('<br>').trim()}</p>`;gl.appendChild(card);});
       ga.appendChild(gl);
-      // Store for lazy render when gaps tab is opened
-      window._pendingGapsChart = allPapers;
     }
 
     // Save to history
@@ -1673,7 +1696,6 @@ async function startGeneration(){
 
     showMain('output');
     document.getElementById('outputBadge').style.display='';
-    setTimeout(()=>{renderOutputCharts(displaySections,allPapers);resizeAllCharts();},300);
 
   }catch(e){
     if(e.message==='__STOPPED__'){
@@ -1743,7 +1765,6 @@ function copyClipboard(){if(!generatedText)return;navigator.clipboard.writeText(
 function dl(filename,content,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  SCOPUS SEARCH ENGINE                                          ║
@@ -1781,158 +1802,7 @@ async function searchScopus(q, max){
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  GRAPHICAL ABSTRACT CHARTS                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
-const CHART_PALETTE = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#15803d'];
-let _chartInstances = {};
 
-function destroyChart(id){
-  if(_chartInstances[id]){
-    try{_chartInstances[id].destroy();}catch(e){}
-    delete _chartInstances[id];
-  }
-}
-
-// Core: render a chart only when its canvas is visible in the DOM
-// If not visible yet, wait for it with MutationObserver + retry
-function safeRenderChart(canvasId, chartConfig, attempt){
-  attempt = attempt || 0;
-  if(attempt > 30) return; // give up after 3 seconds
-  const canvas = document.getElementById(canvasId);
-  if(!canvas){ setTimeout(()=>safeRenderChart(canvasId, chartConfig, attempt+1), 100); return; }
-  // Check if canvas has non-zero dimensions (visible)
-  const rect = canvas.getBoundingClientRect();
-  const parent = canvas.parentElement;
-  const isVisible = rect.width > 0 && rect.height > 0 &&
-    getComputedStyle(parent).display !== 'none' &&
-    getComputedStyle(canvas.closest('.tc') || document.body).display !== 'none';
-  if(!isVisible){
-    setTimeout(()=>safeRenderChart(canvasId, chartConfig, attempt+1), 100);
-    return;
-  }
-  destroyChart(canvasId);
-  try{
-    _chartInstances[canvasId] = new Chart(canvas, chartConfig);
-  }catch(e){ console.warn('Chart error on', canvasId, e); }
-}
-
-// Resize all visible charts (call after tab switch)
-function resizeAllCharts(){
-  Object.entries(_chartInstances).forEach(([id, chart])=>{
-    try{ chart.resize(); }catch(e){}
-  });
-}
-
-function renderPipelineCharts(papers){
-  const row = document.getElementById('pipelineChartsRow');
-  if(!row) return;
-  row.style.display = 'grid';
-
-  // ── Bar: papers por año
-  const yearMap = {};
-  papers.forEach(p=>{const y=parseInt(p.year);if(y>1990&&y<=2026)yearMap[y]=(yearMap[y]||0)+1;});
-  const years = Object.keys(yearMap).sort();
-  if(years.length){
-    safeRenderChart('chartYear', {
-      type:'bar',
-      data:{
-        labels: years,
-        datasets:[{label:'Papers', data:years.map(y=>yearMap[y]),
-          backgroundColor:'rgba(37,99,235,0.75)', borderColor:'#2563eb',
-          borderWidth:1, borderRadius:4}]
-      },
-      options:{responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false}, tooltip:{callbacks:{title:i=>'Año '+i[0].label}}},
-        scales:{y:{beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10}, stepSize:1}},
-                x:{grid:{display:false}, ticks:{font:{size:10}, maxRotation:45}}}}
-    });
-  }
-
-  // ── Donut: por fuente
-  const srcMap = {};
-  papers.forEach(p=>{const s=p.source||'Otro'; srcMap[s]=(srcMap[s]||0)+1;});
-  const srcLabels = Object.keys(srcMap);
-  if(srcLabels.length){
-    safeRenderChart('chartSrc', {
-      type:'doughnut',
-      data:{
-        labels: srcLabels,
-        datasets:[{data:srcLabels.map(s=>srcMap[s]),
-          backgroundColor:CHART_PALETTE.slice(0,srcLabels.length),
-          borderWidth:2, borderColor:'#fff', hoverOffset:6}]
-      },
-      options:{responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'right', labels:{font:{size:10}, boxWidth:12, padding:6}},
-          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw} papers`}}}}
-    });
-  }
-}
-
-function renderOutputCharts(sections, papers){
-  const row = document.getElementById('outputChartsRow');
-  if(!row) return;
-  row.style.display = 'grid';
-  row.style.gridTemplateColumns = '1fr 1fr';
-
-  // ── Pie: palabras por sección
-  const labels = Object.keys(sections).filter(k=>k!=='Appendix');
-  const wordCounts = labels.map(k=>(sections[k]||'').split(/\s+/).filter(Boolean).length);
-  if(labels.length){
-    safeRenderChart('chartSections', {
-      type:'pie',
-      data:{
-        labels,
-        datasets:[{data:wordCounts,
-          backgroundColor:CHART_PALETTE.slice(0,labels.length),
-          borderWidth:2, borderColor:'#fff', hoverOffset:4}]
-      },
-      options:{responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'right', labels:{font:{size:9}, boxWidth:10, padding:5}},
-          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw} pal.`}}}}
-    });
-  }
-
-  // ── Donut: Open Access
-  if(papers.length){
-    const oaCount = papers.filter(p=>p.oa_status&&p.oa_status!=='closed'&&p.oa_status!=='').length;
-    const closedCount = papers.length - oaCount;
-    safeRenderChart('chartOA', {
-      type:'doughnut',
-      data:{
-        labels:['Open Access','Cerrado'],
-        datasets:[{data:[oaCount, closedCount],
-          backgroundColor:['rgba(5,150,105,0.8)','rgba(209,213,219,0.6)'],
-          borderWidth:2, borderColor:'#fff', hoverOffset:4}]
-      },
-      options:{responsive:true, maintainAspectRatio:false, cutout:'60%',
-        plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:10, padding:6}},
-          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw}`}}}}
-    });
-  }
-}
-
-function renderGapsChart(papers){
-  const row = document.getElementById('gapsChartRow');
-  if(!row || !papers.length) return;
-  row.style.display = 'grid';
-  row.style.gridTemplateColumns = '1fr';
-
-  const top = [...papers].sort((a,b)=>(b.citations||0)-(a.citations||0)).slice(0,8);
-  const hasCites = top.some(p=>(p.citations||0)>0);
-  if(!hasCites) return;
-
-  safeRenderChart('chartTopCites', {
-    type:'bar',
-    data:{
-      labels: top.map(p=>(p.title||'').slice(0,40)+((p.title||'').length>40?'…':'')),
-      datasets:[{label:'Citas', data:top.map(p=>p.citations||0),
-        backgroundColor:'rgba(5,150,105,0.75)', borderColor:'#059669',
-        borderWidth:1, borderRadius:4}]
-    },
-    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10}}},
-              y:{grid:{display:false}, ticks:{font:{size:10}, maxTicksLimit:8}}}}
-  });
-}
 
 // ── Live section streaming ──────────────────────────────────────────────────
 function initLiveOutput(){
@@ -2052,7 +1922,7 @@ async function regenSection(title,btn){
     const newContent=await callAI(apiKey,[
       {role:'system',content:`You are an Academic Section Writer. Write in ${lang}.`},
       {role:'user',content:`Rewrite the "${title}" section of a state-of-the-art review.\n${feedback?'User feedback: '+feedback+'\n':''}\nBase on this context:\n${fmt(allPapersStore,15)}\n\nWrite ~${Math.max(400,Math.floor(parseInt(document.getElementById('wc').value)/Object.keys(sectionTextsStore).length))} words. Academic tone. Cite as [Author et al., Year].`}
-    ],getTokens('crafter'),0.7);
+    ],getTokens('crafter'),0.7,getAgentModel('crafter'));
     sectionTextsStore[title]=newContent;
     // Update textarea
     const textareas=document.querySelectorAll('.section-header');
@@ -2134,7 +2004,7 @@ async function startGeneration(){
     log('🤖 Scout: planificando búsqueda...','info');
     let plan={research_questions:[],search_terms:[topic+(kw?' '+kw:'')],key_areas:[]};
     try{
-      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5);
+      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5,getAgentModel('scout'));
       plan=JSON.parse(raw.replace(/```json|```/g,'').trim());
       log(`✅ Scout: ${(plan.key_areas||[]).join(' · ')}`,'ok');
     }catch(e){log('⚠ Scout JSON fallido, usando query directa.','warn');}
@@ -2165,7 +2035,6 @@ async function startGeneration(){
     allPapersStore=allPapers;
     log(`📊 Total deduplicado: ${allPapers.length} papers`,'ok');
     // 📊 Render pipeline charts immediately after search
-    if(allPapers.length) setTimeout(()=>renderPipelineCharts(allPapers,{}),80);
 
     const papersFormatted=fmt(allPapers,topP);
 
@@ -2209,7 +2078,7 @@ async function startGeneration(){
     log('🏗️ ── FASE 2: STRUCTURE ──────────────────────','info');
     let structure={"Introduction":800,"Background":1200,"Current State of the Art":2000,"Methodological Approaches":1500,"Key Findings":1200,"Research Gaps and Future Directions":700,"Discussion":600,"Conclusion":500};
     try{
-      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5);
+      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5,getAgentModel('architect'));
       const parsed=JSON.parse(sr.replace(/```json|```/g,'').trim());
       if(typeof parsed==='object'&&Object.keys(parsed).length>3)structure=parsed;
       log(`✅ Architect: ${Object.keys(structure).join(' → ')}`,'ok');
@@ -2232,7 +2101,7 @@ async function startGeneration(){
         {role:'user',content:`Write the "${sec}" section.\nTopic: ${topic}\nTarget: ~${tgt} words\n${instruct?'Instructions: '+instruct+'\n':''}\nGaps:\n${gapsText?gapsText.slice(0,600):'N/A'}\n\nBase on:\n${mainReview}\n\nContext:\n${signalAnalysis}\n\nCite as [Author et al., Year].`}
       ],getTokens('crafter'),temp);
 
-      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3);}
+      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3,getAgentModel('thread'));}
 
       let finalText=text;
       try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
@@ -2255,12 +2124,12 @@ async function startGeneration(){
       const fullText=Object.values(sectionTexts).join('\n\n');
       const chunks=[];for(let i=0;i<fullText.length;i+=5000)chunks.push(fullText.slice(i,i+5000));
       for(let i=0;i<Math.min(chunks.length,3);i++){
-        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3);
-        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3);
+        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3,getAgentModel('skeptic'));
+        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3,getAgentModel('verifier'));
       }
       const scores=[];
       for(const[sec,txt]of Object.entries(sectionTexts)){
-        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3);
+        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3,getAgentModel('referee'));
         const m=rev.match(/OVERALL[:\s]+(\d+(?:\.\d+)?)\s*\/\s*5/i);if(m)scores.push(parseFloat(m[1]));
       }
       if(scores.length){const avg=scores.reduce((a,b)=>a+b,0)/scores.length;qs=`${Math.round(avg/5*100)}/100 (avg ${avg.toFixed(1)}/5)`;log(`📊 Quality Score: ${qs}`,'ok');}
@@ -2332,8 +2201,6 @@ async function startGeneration(){
       const gl=document.createElement('div');gl.className='gaps-list fi';
       gapsText.split(/\nGAP \[?\d+\]?:/i).filter(Boolean).forEach((g,i)=>{const lines=g.trim().split('\n');const card=document.createElement('div');card.className='gap-card';card.innerHTML=`<h4>GAP ${i+1}: ${lines[0].replace(/^[:.\s]+/,'').trim()}</h4><p>${lines.slice(1).join('<br>').trim()}</p>`;gl.appendChild(card);});
       ga.appendChild(gl);
-      // Render gaps chart
-      if(allPapers.length) setTimeout(()=>renderGapsChart(allPapers),50);
     }
 
     // Save to history
@@ -2342,8 +2209,6 @@ async function startGeneration(){
 
     showMain('output');
     document.getElementById('outputBadge').style.display='';
-    // Render output charts
-    setTimeout(()=>renderOutputCharts(displaySections,allPapers),100);
 
   }catch(e){
     if(e.message==='__STOPPED__'){
@@ -2413,7 +2278,6 @@ function copyClipboard(){if(!generatedText)return;navigator.clipboard.writeText(
 function dl(filename,content,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  SCOPUS SEARCH ENGINE                                          ║
