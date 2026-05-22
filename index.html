@@ -294,10 +294,79 @@ textarea{resize:vertical;min-height:68px}
   .onboard-steps{grid-template-columns:1fr}
 }
 
+
+
+/* ── Live timer + section counter ────────────────────────────── */
+.gen-status-bar{display:none;align-items:center;gap:16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:8px 14px;margin-bottom:12px;font-size:12px;color:var(--accent)}
+.gen-status-bar.visible{display:flex}
+.gen-timer{font-weight:600;font-family:var(--serif);font-size:15px;min-width:52px}
+.gen-sections{color:var(--t2)}
+.gen-phase-label{margin-left:auto;color:var(--t3)}
+/* ── Search report card ───────────────────────────────────────── */
+.search-report{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.search-report-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.search-report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.src-result{background:#f7f8fa;border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
+.src-result.ok{border-color:#bbf7d0;background:#f0fdf4}
+.src-result.warn{border-color:#fde68a;background:#fffbeb}
+.src-result.off{opacity:.45}
+.src-result-name{font-size:11px;color:var(--t2);font-weight:500;margin-bottom:2px}
+.src-result-count{font-size:18px;font-weight:500;font-family:var(--serif);color:var(--teal)}
+.src-result.warn .src-result-count{color:var(--amber)}
+
+/* ── Toast notifications ─────────────────────────────────────── */
+#toastContainer{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:280px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:toastIn .2s ease;pointer-events:auto;font-size:13px;color:var(--text)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.warn{border-left:3px solid var(--amber)}
+.toast.ok{border-left:3px solid var(--teal)}
+.toast.info{border-left:3px solid var(--accent)}
+.toast-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1;line-height:1.5}
+.toast-close{cursor:pointer;color:var(--t3);font-size:16px;flex-shrink:0;background:none;border:none;padding:0;font-family:var(--ff)}
+.toast-close:hover{color:var(--text)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+
 /* ── Topic chips ───────────────────────────────────────────── */
 .topic-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:var(--accent);cursor:pointer;transition:all .15s;user-select:none}
 .topic-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
+
+
+
+/* ── Table of contents panel ─────────────────────────────────── */
+.toc-panel{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.toc-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.toc-list{display:flex;flex-direction:column;gap:2px}
+.toc-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;transition:all .15s;text-decoration:none}
+.toc-item:hover{background:#f3f4f6}
+.toc-item-title{font-size:12px;color:var(--t2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toc-item-words{font-size:10px;color:var(--t3);flex-shrink:0}
+.toc-item-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+.toc-item.edited .toc-item-dot{background:var(--amber)}
+.toc-item.fresh .toc-item-dot{background:var(--teal)}
+
+/* ── Markdown render / section read-edit ─────────────────────── */
+.sec-view-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.sec-view-btn{font-size:11px;padding:3px 9px;cursor:pointer;border:none;background:#f7f8fa;color:var(--t3);font-family:var(--ff);transition:all .15s}
+.sec-view-btn.active{background:var(--accent);color:#fff}
+.md-preview{font-size:13px;color:var(--text);line-height:1.8;padding:8px 2px;min-height:80px}
+.md-preview h1,.md-preview h2{font-family:var(--serif);font-weight:400;margin:16px 0 8px;color:var(--text)}
+.md-preview h2{font-size:16px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.md-preview h3{font-size:14px;font-weight:500;margin:12px 0 6px}
+.md-preview strong{font-weight:600;color:var(--text)}
+.md-preview em{font-style:italic}
+.md-preview p{margin:0 0 10px}
+.md-preview ul,.md-preview ol{margin:4px 0 10px;padding-left:20px}
+.md-preview li{margin:2px 0}
+.md-preview sup{font-size:10px;color:var(--accent);font-weight:500}
+.md-preview a{color:var(--accent);text-decoration:none}
+.md-preview a:hover{text-decoration:underline}
+.md-preview code{background:#f3f4f6;border-radius:3px;padding:1px 4px;font-size:12px}
+.section-body textarea{display:none}
+.section-body.edit-mode textarea{display:block}
+.section-body.edit-mode .md-preview{display:none}
 
 /* ── Agent model selector ──────────────────────────────────── */
 .model-sel{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:#fff;color:var(--t2);cursor:pointer;font-family:var(--ff)}
@@ -317,6 +386,8 @@ textarea{resize:vertical;min-height:68px}
 <!-- ══════════════════════════════════════════════
      ONBOARDING OVERLAY (shown on first visit)
 ══════════════════════════════════════════════ -->
+<div id="toastContainer"></div>
+
 <div class="onboard-overlay" id="onboardOverlay">
   <div class="onboard-box">
     <div id="ob1">
@@ -639,6 +710,14 @@ textarea{resize:vertical;min-height:68px}
         <div class="ph" id="ph5"><div class="pnum">5</div>Polish</div>
       </div>
 
+      <!-- Live generation status bar -->
+      <div class="gen-status-bar" id="genStatusBar">
+        <span style="font-size:14px">⏱</span>
+        <span class="gen-timer" id="genTimer">0:00</span>
+        <span class="gen-sections" id="genSectionsCount"></span>
+        <span class="gen-phase-label" id="genPhaseLabel">Iniciando...</span>
+      </div>
+
       <!-- HUMAN PROGRESS -->
       <div class="human-progress" id="humanProgress">
         <div id="hpSteps"></div>
@@ -660,11 +739,6 @@ textarea{resize:vertical;min-height:68px}
         </div>
       </div>
     </div>
-<div class="chart-card">
-      <div class="chart-card-title">🌐 Distribución por fuente</div>
-      <div class="chart-wrap"></div>
-    </div>
-  </div>
 
   </div><!-- /wizard -->
 
@@ -682,12 +756,8 @@ textarea{resize:vertical;min-height:68px}
       <div class="qb-item">📚 <strong id="qbPapers">—</strong> papers</div>
       <div class="qb-item">📝 <strong id="qbSecs">—</strong> secciones</div>
       <div class="qb-item">⏱ <strong id="qbTime">—</strong></div>
+      <div class="qb-item" id="costBadge" style="display:none">💳 <strong id="qbCost" style="color:var(--teal)">—</strong></div>
       <div class="qb-item" id="partialBadge" style="display:none">⚠️ <strong style="color:var(--amber)">Borrador parcial guardado</strong></div>
-    </div>
-<div class="chart-card">
-        <div class="chart-card-title">🔓 Open Access ratio</div>
-        <div class="chart-wrap" style="height:140px"></div>
-      </div>
     </div>
 
     <div id="outputArea">
@@ -704,7 +774,6 @@ textarea{resize:vertical;min-height:68px}
 
   <!-- ══════ PANEL: GAPS ══════ -->
   <div class="tc content" id="tc-gaps">
-</div>
 
     <div id="gapsArea">
       <div class="placeholder"><div class="bi">🔍</div><p>Los gaps detectados por el agente <strong>gap_detector</strong> aparecerán aquí.</p></div>
@@ -805,14 +874,14 @@ const AGENTS=[
   {id:'data_analyst',phase:'1 – Research',badge:'b-r',role:'Academic Trend Analyzer — bibliometría y tendencias temporales',def:2000,model:'gpt-4o-mini'},
   {id:'gap_detector',phase:'1 – Research',badge:'b-r',role:'Research Gap Identifier — brechas en literatura (PRISMA)',def:2000,model:'gpt-4o-mini'},
   {id:'architect',phase:'2 – Structure',badge:'b-w',role:'Document Architect — estructura y distribución de palabras',def:2000,model:'gpt-4o-mini'},
-  {id:'crafter',phase:'3 – Writing',badge:'b-w',role:'Academic Section Writer — redacta cada sección individualmente',def:4000,model:'gpt-4o'},
+  {id:'crafter',phase:'3 – Writing',badge:'b-w',role:'Academic Section Writer — redacta cada sección individualmente',def:4000,model:'gpt-4o-mini'},
   {id:'thread',phase:'3 – Writing',badge:'b-w',role:'Coherence Checker — revisa transiciones entre secciones',def:800,model:'gpt-4o-mini'},
-  {id:'narrator',phase:'3 – Writing',badge:'b-w',role:'Voice Refiner — mejora estilo académico y fluidez',def:3000,model:'gpt-4o'},
+  {id:'narrator',phase:'3 – Writing',badge:'b-w',role:'Voice Refiner — mejora estilo académico y fluidez',def:3000,model:'gpt-4o-mini'},
   {id:'skeptic',phase:'4 – Validation',badge:'b-v',role:'Fact Checker — detecta afirmaciones sin cita',def:800,model:'gpt-4o-mini'},
   {id:'verifier',phase:'4 – Validation',badge:'b-v',role:'Citation Validator — verifica coherencia citas/referencias',def:800,model:'gpt-4o-mini'},
   {id:'referee',phase:'4 – Validation',badge:'b-v',role:'Peer Reviewer — puntúa rigor, cobertura, claridad (1-5)',def:800,model:'gpt-4o-mini'},
-  {id:'polish',phase:'5 – Polish',badge:'b-p',role:'Final Editor — gramática, terminología, voz pasiva',def:3000,model:'gpt-4o'},
-  {id:'enhancer',phase:'5 – Polish',badge:'b-p',role:'Publication Enhancer — abstract 250w + keywords + highlights',def:2000,model:'gpt-4o'},
+  {id:'polish',phase:'5 – Polish',badge:'b-p',role:'Final Editor — gramática, terminología, voz pasiva',def:3000,model:'gpt-4o-mini'},
+  {id:'enhancer',phase:'5 – Polish',badge:'b-p',role:'Publication Enhancer — abstract 250w + keywords + highlights',def:2000,model:'gpt-4o-mini'},
   {id:'entropy',phase:'5 – Polish',badge:'b-p',role:'Originality Checker — puntúa originalidad del texto (1-10)',def:500,model:'gpt-4o-mini'},
   {id:'methodology',phase:'Auxiliar',badge:'b-a',role:'Methodology Designer — sección PRISMA sistemática',def:1500,model:'gpt-4o-mini'},
   {id:'results_synthesizer',phase:'Auxiliar',badge:'b-a',role:'Findings Synthesizer — síntesis ejecutiva 5-7 bullets',def:1500,model:'gpt-4o-mini'},
@@ -1061,6 +1130,13 @@ function buildAgentTable(){
   }).join('');
 }
 function saveAgentModel(id,model){localStorage.setItem('dmod_'+id,model);}
+
+function calcRealCost(promptToks, completionToks, model){
+  const costs={'gpt-4o-mini':{in:0.15,out:0.6},'gpt-4o':{in:2.5,out:10},'gpt-4-turbo':{in:10,out:30},'gpt-3.5-turbo':{in:0.5,out:1.5}};
+  const c=costs[model]||costs['gpt-4o-mini'];
+  return ((promptToks/1e6)*c.in + (completionToks/1e6)*c.out);
+}
+
 function getAgentModel(id){return localStorage.getItem('dmod_'+id)||AGENTS.find(a=>a.id===id)?.model||'gpt-4o-mini';}
 function resetAgentDefaults(){AGENTS.forEach(a=>{localStorage.removeItem('dtok_'+a.id);localStorage.removeItem('dmod_'+a.id);const el=document.getElementById('tok_'+a.id);if(el)el.value=a.def;});buildAgentTable();log('↺ Tokens y modelos restaurados.','warn');}
 function getTokens(id){const el=document.getElementById('tok_'+id);if(el)return parseInt(el.value)||1000;return AGENTS.find(a=>a.id===id)?.def||1000;}
@@ -1089,7 +1165,13 @@ async function callAI(apiKey,messages,maxTokens=1500,temp=0.7,modelOverride=null
     try{
       const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model,messages,max_tokens:maxTokens,temperature:temp})});
       if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
-      return(await r.json()).choices[0].message.content;
+      const _data=await r.json();
+      const _usage=_data.usage||{};
+      window._tokenUsage=window._tokenUsage||{prompt:0,completion:0,calls:0};
+      window._tokenUsage.prompt+=_usage.prompt_tokens||0;
+      window._tokenUsage.completion+=_usage.completion_tokens||0;
+      window._tokenUsage.calls++;
+      return _data.choices[0].message.content;
     }catch(e){
       if(e.message==='__STOPPED__')throw e;
       if(attempt<retries-1){const w=Math.pow(2,attempt)*1000;log(`⚠ Reintento ${attempt+1}/${retries}: ${e.message} (${w/1000}s)...`,'warn');await new Promise(r=>setTimeout(r,w));}
@@ -1141,6 +1223,14 @@ function loadDraft(){
     renderOutputSections(sectionTextsStore,d.papers||[],d.gaps||'',d.meta||{});
     document.getElementById('partialBadge').style.display='flex';
     document.getElementById('qualityBar').style.display='flex';
+  // Show real token cost
+  if(window._tokenUsage && window._tokenUsage.calls > 0){
+    const _model=document.getElementById('model').value;
+    const _cost=calcRealCost(window._tokenUsage.prompt, window._tokenUsage.completion, _model);
+    const _total=(window._tokenUsage.prompt+window._tokenUsage.completion);
+    document.getElementById('qbCost').textContent='$'+_cost.toFixed(3)+' ('+Math.round(_total/1000)+'k tok)';
+    document.getElementById('costBadge').style.display='flex';
+  }
     document.getElementById('exportRow').style.display='flex';
     document.getElementById('outputBadge').style.display='';
     showMain('output');
@@ -1237,6 +1327,82 @@ function clearHistory(){localStorage.removeItem('doctoralia_history');renderHist
 //  RENDER OUTPUT WITH EDITABLE SECTIONS
 // ═══════════════════════════════════════════════════
 
+
+// ── Live generation timer ─────────────────────────────────────────────────
+let _timerInterval = null;
+let _sectionsWritten = 0;
+let _totalSections = 0;
+let _sourceResults = {};
+
+function startGenTimer(){
+  _sectionsWritten = 0; _sourceResults = {};
+  const bar = document.getElementById('genStatusBar');
+  if(bar) bar.classList.add('visible');
+  const start = Date.now();
+  _timerInterval = setInterval(()=>{
+    const s = Math.floor((Date.now()-start)/1000);
+    const el = document.getElementById('genTimer');
+    if(el) el.textContent = Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
+  }, 1000);
+}
+function stopGenTimer(){
+  clearInterval(_timerInterval);
+  const bar = document.getElementById('genStatusBar');
+  if(bar) bar.classList.remove('visible');
+}
+function updateGenPhase(label){
+  const el = document.getElementById('genPhaseLabel');
+  if(el) el.textContent = label;
+}
+function updateGenSections(written, total){
+  _sectionsWritten = written; _totalSections = total;
+  const el = document.getElementById('genSectionsCount');
+  if(el && total > 0) el.textContent = 'Sección '+written+'/'+total;
+}
+function recordSourceResult(name, count){
+  _sourceResults[name] = (_sourceResults[name]||0) + count;
+}
+function buildSearchReport(activeFlags){
+  // activeFlags: {ss,pm,ax,oa,ep,cr,sc} and their results
+  const srcDefs = [
+    {key:'ss', name:'Semantic Scholar'}, {key:'pm', name:'PubMed'},
+    {key:'ax', name:'arXiv'}, {key:'oa', name:'OpenAlex'},
+    {key:'ep', name:'Europe PMC'}, {key:'cr', name:'CrossRef'},
+    {key:'sc', name:'Scopus'}
+  ];
+  const div = document.createElement('div');
+  div.className = 'search-report fi';
+  const total = Object.values(_sourceResults).reduce((a,b)=>a+b,0);
+  div.innerHTML = '<div class="search-report-title">🔍 Informe de búsqueda · '+total+' papers encontrados</div>'
+    + '<div class="search-report-grid">'
+    + srcDefs.map(s => {
+        const active = activeFlags[s.key];
+        const count = _sourceResults[s.name] || 0;
+        const cls = !active ? 'off' : count > 0 ? 'ok' : 'warn';
+        const label = !active ? '—' : count > 0 ? count : '⚠ 0';
+        return '<div class="src-result '+cls+'">'
+          + '<div class="src-result-name">'+s.name.split(' ').slice(-1)[0]+'</div>'
+          + '<div class="src-result-count">'+label+'</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+  return div;
+}
+
+// ── Toast notification system ──────────────────────────────────────────────
+function showToast(msg, type, duration){
+  type = type || 'info';
+  duration = duration || 4000;
+  const icons = {error:'❌', warn:'⚠️', ok:'✅', info:'💡'};
+  const tc = document.getElementById('toastContainer');
+  if(!tc) return;
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = '<span class="toast-icon">'+icons[type]+'</span><span class="toast-body">'+msg+'</span><button class="toast-close" onclick="this.closest('.toast').remove()">×</button>';
+  tc.appendChild(t);
+  setTimeout(()=>{ t.style.animation='toastOut .2s ease forwards'; setTimeout(()=>t.remove(), 200); }, duration);
+}
+
 // ── Topic input helpers ─────────────────────────────────────────────────────
 function onTopicInput(val){
   const cc=document.getElementById('topicCharCount');
@@ -1313,6 +1479,99 @@ function liveAppendSection(title, content){
   if(badge) badge.style.display='';
 }
 
+
+// ── Markdown renderer (inline, no deps) ───────────────────────────────────
+
+// ── Table of Contents ─────────────────────────────────────────────────────
+function buildTOC(sections){
+  const existing = document.getElementById('articleTOC');
+  if(existing) existing.remove();
+  const panel = document.createElement('div');
+  panel.id = 'articleTOC';
+  panel.className = 'toc-panel fi';
+  const titles = Object.keys(sections).filter(k=>!k.includes('Appendix'));
+  panel.innerHTML = '<div class="toc-title">📑 Contenido del artículo <span style="margin-left:auto;font-size:10px;color:var(--t3);font-weight:400">'+titles.length+' secciones</span></div>'
+    + '<div class="toc-list">'
+    + titles.map((title,i) => {
+        const words = (sections[title]||'').split(/\s+/).filter(Boolean).length;
+        return '<div class="toc-item fresh" onclick="scrollToSection(''+title.replace(/'/g,"\'")+'')">'
+          + '<div class="toc-item-dot"></div>'
+          + '<span class="toc-item-title">'+title+'</span>'
+          + '<span class="toc-item-words">'+words+' pal.</span>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+  return panel;
+}
+function scrollToSection(title){
+  // Find section block with matching title
+  const headers = document.querySelectorAll('.section-title-text');
+  for(const h of headers){
+    if(h.textContent.includes(title)){
+      const block = h.closest('.section-block');
+      if(block){
+        block.scrollIntoView({behavior:'smooth', block:'start'});
+        // Expand if collapsed
+        const body = block.querySelector('.section-body');
+        if(body && body.style.display==='none') toggleSection(block.querySelector('.section-header'));
+        // Highlight briefly
+        block.style.boxShadow='0 0 0 2px var(--accent)';
+        setTimeout(()=>block.style.boxShadow='',1500);
+      }
+      return;
+    }
+  }
+}
+
+function renderMd(text){
+  if(!text) return '';
+  let h = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // Headers
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    // Bold / italic
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Citations [N] → superscript
+    .replace(/\[(\d+(?:,\s*\d+)*)\]/g,'<sup>[$1]</sup>')
+    // Lists
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
+    // Horizontal rule
+    .replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">')
+    // Wrap consecutive <li> in <ul>
+    .replace(/(<li>.*<\/li>
+?)+/g, m => '<ul>'+m+'</ul>')
+    // Paragraphs (double newline)
+    .split(/
+{2,}/).map(block => {
+      if(/^<[hul]|^<hr/.test(block.trim())) return block;
+      if(!block.trim()) return '';
+      return '<p>'+block.trim().replace(/
+/g,' ')+'</p>';
+    }).join('
+');
+  return h;
+}
+function toggleSectionView(btn, mode){
+  const body = btn.closest('.section-body');
+  const preview = body.querySelector('.md-preview');
+  const btns = btn.closest('.sec-view-toggle').querySelectorAll('.sec-view-btn');
+  btns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  if(mode === 'read'){
+    body.classList.remove('edit-mode');
+    const textarea = body.querySelector('textarea');
+    if(preview && textarea) preview.innerHTML = renderMd(textarea.value);
+  } else {
+    body.classList.add('edit-mode');
+    const textarea = body.querySelector('textarea');
+    if(textarea){ textarea.style.display='block'; textarea.focus(); }
+  }
+}
+
 function renderOutputSections(sections,papers,gaps,meta){
   const oa=document.getElementById('outputArea');oa.innerHTML='';
   const container=document.createElement('div');container.className='fi';
@@ -1331,12 +1590,17 @@ function renderOutputSections(sections,papers,gaps,meta){
       <div class="section-header" onclick="toggleSection(this)">
         <span class="section-title-text">📄 ${title}</span>
         <div class="section-actions" onclick="event.stopPropagation()">
+          <div class="sec-view-toggle">
+            <button class="sec-view-btn active" data-mode="read" onclick="toggleSectionView(this,'read')">👁 Leer</button>
+            <button class="sec-view-btn" data-mode="edit" onclick="toggleSectionView(this,'edit')">✏️ Editar</button>
+          </div>
           <button class="btn-ghost" onclick="openRegenPanel(this)" title="Reescribir sección">🔄 Reescribir</button>
           <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
           <span style="color:var(--t3);font-size:12px">▼</span>
         </div>
       </div>
       <div class="section-body">
+        <div class="md-preview"></div>
         <textarea oninput="updateSectionText('${title}',this.value)">${content}</textarea>
         <div class="regen-panel" id="rp-${title.replace(/\s+/g,'_')}">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -1372,8 +1636,20 @@ function renderOutputSections(sections,papers,gaps,meta){
     container.appendChild(gapBlock);
   }
 
+  // Build source report
+  const _activeFlags={ss:!!document.getElementById('chk-ss')?.checked,pm:!!document.getElementById('chk-pm')?.checked,ax:!!document.getElementById('chk-ax')?.checked,oa:!!document.getElementById('chk-oa')?.checked,ep:!!document.getElementById('chk-ep')?.checked,cr:!!document.getElementById('chk-cr')?.checked,sc:!!document.getElementById('chk-sc')?.checked};
+  if(Object.values(_sourceResults||{}).some(v=>v>0)){oa.insertBefore(buildSearchReport(_activeFlags), container);}
+  // Insert TOC before sections
+  const _tocEl=buildTOC(sections);
+  if(Object.keys(sections).length>2) oa.insertBefore(_tocEl, container);
   oa.appendChild(container);
   document.getElementById('outputBadge').style.display='';
+  // Render markdown previews for all sections
+  container.querySelectorAll('.section-body').forEach(body=>{
+    const ta=body.querySelector('textarea');
+    const preview=body.querySelector('.md-preview');
+    if(ta&&preview) preview.innerHTML=renderMd(ta.value);
+  });
 }
 
 function toggleSection(header){const body=header.nextElementSibling;body.style.display=body.style.display==='none'?'':'none';}
@@ -1383,7 +1659,7 @@ function openRegenPanel(btn){const rp=btn.closest('.section-body')?.querySelecto
 
 async function regenSection(title,btn){
   const apiKey=document.getElementById('apiKey').value.trim();
-  if(!apiKey){alert('Introduce tu API key primero.');return;}
+  if(!apiKey){showToast('Introduce tu API key primero.','error');return;}
   const rpanel=btn.closest('.regen-panel');
   const instruction=rpanel.querySelector('textarea').value.trim();
   if(!instruction){
@@ -1428,7 +1704,7 @@ async function startGeneration(){
   if(isRunning)return;
   const apiKey=document.getElementById('apiKey').value.trim();
   const topic=document.getElementById('topic').value.trim();
-  if(!apiKey||!apiKey.startsWith('sk-')){alert('Introduce una API key de OpenAI válida (sk-...)');return;}
+  if(!apiKey||!apiKey.startsWith('sk-')){showToast('Introduce una API key de OpenAI válida (sk-...)','error');return;}
   const _activeSources=['ss','pm','ax','oa','ep','cr','sc'].filter(s=>document.getElementById('chk-'+s)?.checked);
   if(_activeSources.length===0){
     const errEl=document.getElementById('sources-error');
@@ -1437,11 +1713,13 @@ async function startGeneration(){
     log('⚠️ Sin fuentes activas — activa al menos una.','warn');
     return;
   }
-  if(!topic){alert('Introduce el tema de la revisión');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
+  if(!topic){showToast('Introduce el tema de la revisión','error');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
   if(document.getElementById('saveKey').checked)localStorage.setItem('doctoralia_apikey',apiKey);
 
   isRunning=true;tStart=Date.now();logCount=0;
   shouldStop=false;
+  window._tokenUsage={prompt:0,completion:0,calls:0};
+  startGenTimer(); updateGenPhase('Buscando papers...');
   document.getElementById('btnGen').disabled=true;
   document.getElementById('btnGen').innerHTML='<span class="pulsing">⏳</span> Generando...';
   document.getElementById('tab-output').innerHTML='📄 Artículo <span id="outputBadge" class="tab-badge" style=""><span class="streaming-dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 1s infinite"></span></span>';
@@ -1504,19 +1782,19 @@ async function startGeneration(){
       if(shouldStop)throw new Error('__STOPPED__');
       const q=queries[qi];
       log(`🔍 Query ${qi+1}/${queries.length}: "${q.slice(0,50)}"`,'info');
-      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');recordSourceResult("Semantic Scholar",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');allPapers.push(...p);}
+      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');recordSourceResult("PubMed",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');recordSourceResult("arXiv",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');recordSourceResult("OpenAlex",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');recordSourceResult("Europe PMC",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useSC){const p=await searchScopus(q,limSC);log(`  Scopus: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useSC){const p=await searchScopus(q,limSC);log(`  Scopus: ${p.length}`,'ok');recordSourceResult("Scopus",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');recordSourceResult("CrossRef",p.length);allPapers.push(...p);}
     }
     allPapers=sortPapers(dedup(allPapers));
     allPapersStore=allPapers;
@@ -1575,7 +1853,9 @@ async function startGeneration(){
 
     // ── FASE 3: WRITING ───────────────────────────
     initLiveOutput();
-    setHPStep(3);
+    const _secTitles=Object.keys(structure);
+    let _secIdx=0;
+    setHPStep(3);updateGenPhase('Redactando sección 1/'+_secTitles.length+'...');
     log('✍️ ── FASE 3: WRITING ─────────────────────────','info');
     const sections=Object.keys(structure);
     const sectionTexts={};let prevContent='';
@@ -1594,6 +1874,7 @@ async function startGeneration(){
       try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
 
       sectionTexts[sec]=finalText;prevContent=finalText;
+      _secIdx++;updateGenSections(_secIdx,_secTitles.length);updateGenPhase('Redactando sección '+_secIdx+'/'+_secTitles.length+'...');
       liveAppendSection(sec,finalText);
       log(`✅ "${sec}": ${finalText.split(' ').length} palabras`,'ok');
       // Autosave after each section
@@ -1702,9 +1983,9 @@ async function startGeneration(){
       log('⏹ Generación detenida por el usuario.','warn');
     } else {
       log('❌ Error: '+e.message,'err');
-      if(e.message.includes('401'))log('💡 API key incorrecta. Verifica en platform.openai.com/api-keys','warn');
-      else if(e.message.includes('429'))log('💡 Rate limit. Espera unos segundos.','warn');
-      else if(e.message.includes('insufficient_quota'))log('💡 Cuota agotada. Añade créditos en platform.openai.com/billing','warn');
+      if(e.message.includes('401')){log('💡 API key incorrecta.','warn');showToast('API key incorrecta (401). Verifica en platform.openai.com/api-keys','error',6000);}
+      else if(e.message.includes('429')){log('💡 Rate limit.','warn');showToast('Rate limit alcanzado (429). El reintento automático está activo.','warn');}
+      else if(e.message.includes('insufficient_quota')){log('💡 Cuota agotada.','warn');showToast('Cuota de OpenAI agotada. Añade créditos en platform.openai.com/billing','error',8000);}
     }
     // Show partial draft if something was generated
     if(Object.keys(sectionTextsStore).length>0){
@@ -1717,6 +1998,7 @@ async function startGeneration(){
   }finally{
     isRunning=false;
     shouldStop=false;
+    stopGenTimer();
     document.getElementById('btnGen').disabled=false;document.getElementById('btnGen').innerHTML='▶ Generar';
     document.getElementById('btnStop').disabled=true;
     document.getElementById('btnGenWizard').disabled=false;document.getElementById('btnGenWizard').innerHTML='▶ Generar revisión';
@@ -1912,7 +2194,7 @@ function openRegenPanel(btn){const rp=btn.closest('.section-body')?.querySelecto
 
 async function regenSection(title,btn){
   const apiKey=document.getElementById('apiKey').value.trim();
-  if(!apiKey){alert('Introduce tu API key primero.');return;}
+  if(!apiKey){showToast('Introduce tu API key primero.','error');return;}
   const rpanel=btn.closest('.regen-panel');
   const feedback=rpanel.querySelector('textarea').value.trim();
   const orig=btn.textContent;
@@ -1941,7 +2223,7 @@ async function startGeneration(){
   if(isRunning)return;
   const apiKey=document.getElementById('apiKey').value.trim();
   const topic=document.getElementById('topic').value.trim();
-  if(!apiKey||!apiKey.startsWith('sk-')){alert('Introduce una API key de OpenAI válida (sk-...)');return;}
+  if(!apiKey||!apiKey.startsWith('sk-')){showToast('Introduce una API key de OpenAI válida (sk-...)','error');return;}
   const _activeSources=['ss','pm','ax','oa','ep','cr','sc'].filter(s=>document.getElementById('chk-'+s)?.checked);
   if(_activeSources.length===0){
     const errEl=document.getElementById('sources-error');
@@ -1950,7 +2232,7 @@ async function startGeneration(){
     log('⚠️ Sin fuentes activas — activa al menos una.','warn');
     return;
   }
-  if(!topic){alert('Introduce el tema de la revisión');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
+  if(!topic){showToast('Introduce el tema de la revisión','error');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
   if(document.getElementById('saveKey').checked)localStorage.setItem('doctoralia_apikey',apiKey);
 
   isRunning=true;tStart=Date.now();logCount=0;
@@ -2017,19 +2299,19 @@ async function startGeneration(){
       if(shouldStop)throw new Error('__STOPPED__');
       const q=queries[qi];
       log(`🔍 Query ${qi+1}/${queries.length}: "${q.slice(0,50)}"`,'info');
-      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');recordSourceResult("Semantic Scholar",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');allPapers.push(...p);}
+      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');recordSourceResult("PubMed",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');recordSourceResult("arXiv",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');recordSourceResult("OpenAlex",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');recordSourceResult("Europe PMC",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useSC){const p=await searchScopus(q,limSC);log(`  Scopus: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useSC){const p=await searchScopus(q,limSC);log(`  Scopus: ${p.length}`,'ok');recordSourceResult("Scopus",p.length);allPapers.push(...p);}
       if(shouldStop)throw new Error('__STOPPED__');
-      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');allPapers.push(...p);}
+      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');recordSourceResult("CrossRef",p.length);allPapers.push(...p);}
     }
     allPapers=sortPapers(dedup(allPapers));
     allPapersStore=allPapers;
