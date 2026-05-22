@@ -294,6 +294,10 @@ textarea{resize:vertical;min-height:68px}
   .onboard-steps{grid-template-columns:1fr}
 }
 
+/* ── Topic chips ───────────────────────────────────────────── */
+.topic-chip{font-size:11px;padding:3px 9px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:var(--accent);cursor:pointer;transition:all .15s;user-select:none}
+.topic-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
 /* ── Graphical Abstract Charts ─────────────────────────────── */
 .chart-card{background:#ffffff;border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--shadow);margin-bottom:14px}
 .chart-card-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -479,8 +483,26 @@ textarea{resize:vertical;min-height:68px}
       <div class="sh">🔬 Tu tema de investigación</div>
       <div class="form-grid">
         <div class="field form-full">
-          <label>Tema de la revisión <span class="req">*</span></label>
-          <input type="text" id="topic" placeholder="Ej: Tactical Physiological Triage System, AI in clinical diagnosis, CRISPR gene editing..." style="font-size:15px;padding:11px 14px">
+          <label>Tema de la revisión <span class="req">*</span>
+            <span id="topicCharCount" style="margin-left:auto;font-weight:400;font-size:11px;color:var(--t3)">0 / 120</span>
+          </label>
+          <input type="text" id="topic" placeholder="Ej: Machine learning in early cancer detection, CRISPR gene editing for rare diseases..." style="font-size:15px;padding:11px 14px" oninput="onTopicInput(this.value)" maxlength="200">
+          <div id="topicSpecBar" style="margin-top:6px;display:none">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden">
+                <div id="topicSpecFill" style="height:100%;border-radius:2px;transition:width .3s,background .3s;width:0%"></div>
+              </div>
+              <span id="topicSpecLabel" style="font-size:11px;color:var(--t3);min-width:80px;text-align:right"></span>
+            </div>
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px" id="topicChips">
+            <span style="font-size:11px;color:var(--t3);margin-right:2px">Ejemplos:</span>
+            <span class="topic-chip" onclick="setTopic(this)">CRISPR en enfermedades raras</span>
+            <span class="topic-chip" onclick="setTopic(this)">Large Language Models in clinical NLP</span>
+            <span class="topic-chip" onclick="setTopic(this)">Microbioma intestinal y salud mental</span>
+            <span class="topic-chip" onclick="setTopic(this)">Quantum computing for drug discovery</span>
+            <span class="topic-chip" onclick="setTopic(this)">Sustainable energy storage materials</span>
+          </div>
         </div>
         <div class="field">
           <label>Idioma de salida</label>
@@ -527,9 +549,10 @@ textarea{resize:vertical;min-height:68px}
 
         <div class="sc" id="sc-cr"><div class="sc-head" onclick="toggleSrc('cr')"><input type="checkbox" id="chk-cr"><span class="sc-ico">🔗</span><div><div class="sc-name">CrossRef</div><div class="sc-sub">165M registros · metadatos DOI</div></div></div><div class="sc-field"><label>Artículos máx.</label><input type="number" id="lim-cr" value="20" min="5" max="100" style="width:100%;margin-top:3px;padding:5px 9px;font-size:12px"></div></div>
       </div>
+      <div id="sources-error" style="display:none;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:var(--r);padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:12px">⚠️ Activa al menos una fuente académica para continuar.</div>
       <div class="wizard-nav">
         <button class="btn" onclick="goWizard(1)">← Atrás</button>
-        <button class="btn btn-primary" onclick="goWizard(3)">Siguiente: Opciones →</button>
+        <button class="btn btn-primary" onclick="checkSourcesAndNext()">Siguiente: Opciones →</button>
       </div>
     </div>
 
@@ -710,9 +733,13 @@ textarea{resize:vertical;min-height:68px}
 
   <!-- ══════ PANEL: HISTORY ══════ -->
   <div class="tc content" id="tc-history">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div><div style="font-size:15px;font-weight:500">Historial de revisiones</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Guardadas localmente en tu navegador · máx. 5</div></div>
       <button class="btn btn-danger" onclick="clearHistory()" style="font-size:12px">🗑 Borrar historial</button>
+    </div>
+    <div style="position:relative;margin-bottom:12px">
+      <input type="text" id="historySearch" placeholder="Buscar en historial..." style="width:100%;padding-left:32px;font-size:13px" oninput="filterHistory(this.value)">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
     </div>
     <div id="historyList"><div class="placeholder"><div class="bi">🕓</div><p>Aún no hay revisiones guardadas.</p></div></div>
   </div>
@@ -849,6 +876,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateEstimate();
   renderHistory();
   buildHPSteps();
+  // Restore last topic
+  const _lastTopic=localStorage.getItem('doctoralia_last_topic');
+  if(_lastTopic&&!document.getElementById('topic').value){document.getElementById('topic').value=_lastTopic;onTopicInput(_lastTopic);}
   // Check for autosaved draft
   const draft=localStorage.getItem('doctoralia_draft');
   if(draft){try{const d=JSON.parse(draft);if(d.text){showDraftBanner(d);}}catch(e){}}
@@ -888,6 +918,20 @@ function showMain(name){
 // ═══════════════════════════════════════════════════
 //  WIZARD NAVIGATION
 // ═══════════════════════════════════════════════════
+
+function checkSourcesAndNext(){
+  const active=['ss','pm','ax','oa','ep','cr','sc'].filter(s=>document.getElementById('chk-'+s)?.checked);
+  const errEl=document.getElementById('sources-error');
+  if(active.length===0){if(errEl)errEl.style.display='block';setTimeout(()=>{if(errEl)errEl.style.display='none';},4000);return;}
+  if(errEl)errEl.style.display='none';
+  if(active.length<2){
+    const warn=document.createElement('div');
+    warn.style.cssText='position:fixed;top:16px;right:16px;background:#fffbeb;border:1px solid #d97706;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.12)';
+    warn.innerHTML='⚠️ Solo 1 fuente activa. Considera activar más para mayor cobertura.';
+    document.body.appendChild(warn);setTimeout(()=>warn.remove(),3500);
+  }
+  goWizard(3);
+}
 function goWizard(step){
   [1,2,3,4].forEach(i=>{
     document.getElementById('wp'+i).classList.remove('active');
@@ -1104,11 +1148,22 @@ function loadDraft(){
 function saveToHistory(topic,wordCount,sections,time){
   try{
     let hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');
-    hist.unshift({id:Date.now(),topic,wordCount,sections,time,ts:Date.now(),text:generatedText});
+
+    const cfg={topic:document.getElementById('topic').value.trim(),keywords:document.getElementById('keywords').value.trim(),lang:document.getElementById('lang').value,citeStyle:document.getElementById('citeStyle').value,model:document.getElementById('model').value};
+hist.unshift({id:Date.now(),topic,wordCount,sections,time,ts:Date.now(),text:generatedText,sectionTexts:sectionTextsStore,papers:allPapersStore.slice(0,30),gaps:gapsStore,cfg});
     hist=hist.slice(0,5);
     localStorage.setItem('doctoralia_history',JSON.stringify(hist));
   }catch(e){}
   renderHistory();
+}
+
+function filterHistory(q){
+  const cards=document.querySelectorAll('#historyList .hist-card');
+  const term=q.toLowerCase();
+  cards.forEach(c=>{
+    const title=c.querySelector('.hist-title')?.textContent?.toLowerCase()||'';
+    c.style.display=(!term||title.includes(term))?'flex':'none';
+  });
 }
 function renderHistory(){
   const area=document.getElementById('historyList');if(!area)return;
@@ -1122,6 +1177,7 @@ function renderHistory(){
       </div>
       <div class="hist-actions">
         <button class="btn-ghost" onclick="loadFromHistory(${i})">📂 Cargar</button>
+        <button class="btn-ghost" title="Restaurar tema y config en el wizard" onclick="reuseHistoryConfig(${i})">↺ Reusar</button>
         <button class="btn-ghost" onclick="downloadHistory(${i})">⬇</button>
         <button class="btn-ghost" style="color:var(--red)" onclick="deleteHistory(${i})">🗑</button>
       </div>
@@ -1129,7 +1185,40 @@ function renderHistory(){
   }catch(e){area.innerHTML='<div class="placeholder"><div class="bi">🕓</div><p>Error cargando historial.</p></div>';}
 }
 function loadFromHistory(i){
-  try{const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');const h=hist[i];if(!h)return;generatedText=h.text||'';showMain('output');document.getElementById('outputArea').innerHTML='';const pre=document.createElement('div');pre.className='out-area fi';pre.textContent=h.text||'';document.getElementById('outputArea').appendChild(pre);document.getElementById('exportRow').style.display='flex';}catch(e){}
+  try{
+    const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');
+    const h=hist[i];if(!h)return;
+    generatedText=h.text||'';
+    sectionTextsStore=h.sectionTexts||{};
+    allPapersStore=h.papers||[];
+    gapsStore=h.gaps||'';
+    if(Object.keys(sectionTextsStore).length){
+      renderOutputSections(sectionTextsStore,allPapersStore,gapsStore,{time:h.time,score:'—'});
+      setTimeout(()=>{renderOutputCharts(sectionTextsStore,allPapersStore);if(allPapersStore.length)renderGapsChart(allPapersStore);},150);
+    } else {
+      showMain('output');
+      document.getElementById('outputArea').innerHTML='';
+      const pre=document.createElement('div');pre.className='out-area fi';pre.style.cssText='white-space:pre-wrap;font-size:13px;line-height:1.8;padding:20px';pre.textContent=h.text||'';
+      document.getElementById('outputArea').appendChild(pre);
+    }
+    document.getElementById('exportRow').style.display='flex';
+    showMain('output');
+  }catch(e){console.error(e);}
+}
+function reuseHistoryConfig(i){
+  try{
+    const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');
+    const h=hist[i];if(!h)return;
+    const cfg=h.cfg||{};
+    if(cfg.topic)document.getElementById('topic').value=cfg.topic;
+    if(cfg.keywords)document.getElementById('keywords').value=cfg.keywords;
+    if(cfg.lang)document.getElementById('lang').value=cfg.lang;
+    if(cfg.citeStyle)document.getElementById('citeStyle').value=cfg.citeStyle;
+    if(cfg.model)document.getElementById('model').value=cfg.model;
+    showMain('wizard');goWizard(1);
+    document.getElementById('topic').focus();
+    log('↺ Configuración restaurada: "'+h.topic+'"','ok');
+  }catch(e){}
 }
 function downloadHistory(i){
   try{const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');const h=hist[i];if(!h)return;generatedText=h.text||'';exportMarkdown();}catch(e){}
@@ -1142,6 +1231,83 @@ function clearHistory(){localStorage.removeItem('doctoralia_history');renderHist
 // ═══════════════════════════════════════════════════
 //  RENDER OUTPUT WITH EDITABLE SECTIONS
 // ═══════════════════════════════════════════════════
+
+// ── Topic input helpers ─────────────────────────────────────────────────────
+function onTopicInput(val){
+  const cc=document.getElementById('topicCharCount');
+  const len=val.length;
+  if(cc){cc.textContent=len+' / 120';cc.style.color=len<10?'var(--red)':len<=120?'var(--teal)':'var(--amber)';}
+  const words=val.trim().split(/[\s]+/).filter(Boolean).length;
+  const bar=document.getElementById('topicSpecBar');
+  const fill=document.getElementById('topicSpecFill');
+  const label=document.getElementById('topicSpecLabel');
+  if(bar&&fill&&label){
+    if(!val.trim()){bar.style.display='none';return;}
+    bar.style.display='block';
+    let pct,color,text;
+    if(words<=2){pct=20;color='#dc2626';text='Muy amplio';}
+    else if(words<=4){pct=50;color='#d97706';text='Amplio';}
+    else if(words<=8){pct=85;color='#059669';text='Optimo';}
+    else if(words<=14){pct=70;color='#2563eb';text='Especifico';}
+    else{pct=40;color='#7c3aed';text='Muy especifico';}
+    fill.style.width=pct+'%';fill.style.background=color;
+    label.textContent=text;label.style.color=color;
+  }
+  try{localStorage.setItem('doctoralia_last_topic',val);}catch(e){}
+}
+function setTopic(chip){
+  const t=chip.textContent;
+  document.getElementById('topic').value=t;
+  onTopicInput(t);
+  document.getElementById('topic').focus();
+}
+
+// ── Live section streaming ──────────────────────────────────────────────────
+function initLiveOutput(){
+  const oa=document.getElementById('outputArea');
+  oa.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.id='liveOutputWrap';
+  wrap.className='fi';
+  oa.appendChild(wrap);
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('qualityBar').style.display='none';
+  document.getElementById('exportRow').style.display='none';
+}
+function liveAppendSection(title, content){
+  const wrap=document.getElementById('liveOutputWrap');
+  if(!wrap) return;
+  // Remove placeholder if present
+  const ph=wrap.querySelector('.live-placeholder');
+  if(ph) ph.remove();
+  const block=document.createElement('div');
+  block.className='section-block fi';
+  block.id='live-sec-'+title.replace(/\s+/g,'_');
+  block.innerHTML=`
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-title-text">📄 ${title}</span>
+      <div class="section-actions">
+        <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
+        <span style="color:var(--t3);font-size:12px">▼</span>
+      </div>
+    </div>
+    <div class="section-body" style="max-height:200px;overflow:hidden;position:relative">
+      <div style="white-space:pre-wrap;font-size:13px;color:var(--t2);line-height:1.7;padding:4px 0">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,#fff)"></div>
+    </div>`;
+  wrap.appendChild(block);
+  // Navigate to output tab to show live progress
+  if(document.getElementById('tc-output') && !document.getElementById('tc-output').classList.contains('active')){
+    document.getElementById('tab-output').classList.add('active');
+    document.getElementById('tc-output').classList.add('active');
+    document.querySelectorAll('.tc').forEach(t=>{if(t.id!=='tc-output')t.classList.remove('active');});
+    document.querySelectorAll('.tab').forEach(t=>{if(t.id!=='tab-output')t.classList.remove('active');});
+  }
+  // Show streaming badge
+  const badge=document.getElementById('outputBadge');
+  if(badge) badge.style.display='';
+}
+
 function renderOutputSections(sections,papers,gaps,meta){
   const oa=document.getElementById('outputArea');oa.innerHTML='';
   const container=document.createElement('div');container.className='fi';
@@ -1234,6 +1400,14 @@ async function startGeneration(){
   const apiKey=document.getElementById('apiKey').value.trim();
   const topic=document.getElementById('topic').value.trim();
   if(!apiKey||!apiKey.startsWith('sk-')){alert('Introduce una API key de OpenAI válida (sk-...)');return;}
+  const _activeSources=['ss','pm','ax','oa','ep','cr','sc'].filter(s=>document.getElementById('chk-'+s)?.checked);
+  if(_activeSources.length===0){
+    const errEl=document.getElementById('sources-error');
+    if(errEl){errEl.style.display='block';setTimeout(()=>errEl.style.display='none',5000);}
+    showMain('wizard');goWizard(2);
+    log('⚠️ Sin fuentes activas — activa al menos una.','warn');
+    return;
+  }
   if(!topic){alert('Introduce el tema de la revisión');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
   if(document.getElementById('saveKey').checked)localStorage.setItem('doctoralia_apikey',apiKey);
 
@@ -1241,6 +1415,7 @@ async function startGeneration(){
   shouldStop=false;
   document.getElementById('btnGen').disabled=true;
   document.getElementById('btnGen').innerHTML='<span class="pulsing">⏳</span> Generando...';
+  document.getElementById('tab-output').innerHTML='📄 Artículo <span id="outputBadge" class="tab-badge" style=""><span class="streaming-dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 1s infinite"></span></span>';
   document.getElementById('btnStop').disabled=false;
   document.getElementById('btnGenWizard').disabled=true;
   document.getElementById('btnStopWizard').disabled=false;
@@ -1317,6 +1492,8 @@ async function startGeneration(){
     allPapers=sortPapers(dedup(allPapers));
     allPapersStore=allPapers;
     log(`📊 Total deduplicado: ${allPapers.length} papers`,'ok');
+    // 📊 Render pipeline charts immediately after search
+    if(allPapers.length) setTimeout(()=>renderPipelineCharts(allPapers,{}),80);
 
     const papersFormatted=fmt(allPapers,topP);
 
@@ -1369,6 +1546,7 @@ async function startGeneration(){
     setPhase(2,'done');setPhase(3,'active');
 
     // ── FASE 3: WRITING ───────────────────────────
+    initLiveOutput();
     setHPStep(3);
     log('✍️ ── FASE 3: WRITING ─────────────────────────','info');
     const sections=Object.keys(structure);
@@ -1388,6 +1566,7 @@ async function startGeneration(){
       try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
 
       sectionTexts[sec]=finalText;prevContent=finalText;
+      liveAppendSection(sec,finalText);
       log(`✅ "${sec}": ${finalText.split(' ').length} palabras`,'ok');
       // Autosave after each section
       saveDraft(sectionTexts,allPapers,gapsText,{topic,time:Math.round((Date.now()-tStart)/1000)+'s'});
@@ -1685,6 +1864,7 @@ function renderOutputCharts(sections, papers){
   const container = document.getElementById('outputChartsRow');
   if(!container) return;
   container.style.display = 'grid';
+  container.style.gridTemplateColumns = '1fr 1fr';
 
   // ── Distribución de palabras por sección (pie) ───────────────────
   const labels = Object.keys(sections);
