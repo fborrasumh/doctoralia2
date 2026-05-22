@@ -1454,7 +1454,6 @@ async function startGeneration(){
 
     // Assemble full text for download
     const elapsed=Math.round((Date.now()-tStart)/1000);
-    const useSC=document.getElementById('chk-sc').checked;
     const srcList2=[useSS?'Semantic Scholar':'',usePM?'PubMed':'',useAX?'arXiv':'',useOA?'OpenAlex':'',useEP?'Europe PMC':'',useCR?'CrossRef':'',useSC?'Scopus':''].filter(Boolean).join(', ');
     let full=`# ${topic}\n## State-of-the-Art Review\n\n`;
     full+=`*Doctoralia · ${new Date().toLocaleDateString('es')} · ${document.getElementById('model').value} · ${cite}*\n`;
