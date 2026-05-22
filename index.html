@@ -238,10 +238,10 @@ textarea{resize:vertical;min-height:68px}
 .section-title-text{font-size:14px;font-weight:500;color:var(--text)}
 .section-actions{display:flex;gap:6px;align-items:center}
 .section-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px;background:#ffffff;margin-bottom:8px}
-.section-body textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--ff);font-size:13px;line-height:1.7;resize:vertical;min-height:120px;outline:none;padding:0}
+.section-body>textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--ff);font-size:13px;line-height:1.7;resize:vertical;min-height:120px;outline:none;padding:0}
 .regen-panel{background:#f8faff;border:1px solid #c7d7f8;border-radius:var(--rl);padding:14px;margin-top:8px;display:none;box-shadow:0 2px 8px rgba(37,99,235,.07)}
 .regen-panel.open{display:block}
-.regen-panel textarea{width:100%;background:#ffffff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--ff);font-size:13px;padding:9px 12px;resize:vertical;outline:none;line-height:1.5}
+.regen-panel textarea{width:100%;background:#ffffff;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--ff);font-size:13px;padding:9px 12px;resize:vertical;outline:none;line-height:1.5;display:block!important}
 .regen-panel textarea:focus{border-color:var(--accent)}
 
 /* ── STATS ── */
@@ -339,8 +339,8 @@ textarea{resize:vertical;min-height:68px}
 .md-preview p{margin:0 0 10px}.md-preview ul,.md-preview ol{margin:4px 0 10px;padding-left:20px}
 .md-preview li{margin:2px 0}.md-preview sup{font-size:10px;color:var(--accent);font-weight:500}
 .md-preview a{color:var(--accent);text-decoration:none}.md-preview code{background:#f3f4f6;border-radius:3px;padding:1px 4px;font-size:12px}
-.section-body textarea{display:none}
-.section-body.edit-mode textarea{display:block}
+.section-body>textarea{display:none}
+.section-body.edit-mode>textarea{display:block}
 .section-body.edit-mode .md-preview{display:none}
 
 /* ── Agent model selector ──────────────────────────────────── */
@@ -1204,7 +1204,49 @@ async function searchSS(q,max){const p=new URLSearchParams({query:q,limit:Math.m
 
 async function searchPM(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const sp=new URLSearchParams({db:'pubmed',term:`(${q}) AND (English[Language])`,retmax:max,retmode:'json',tool:'doctoralia',email});const pmids=((await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${sp}`)).json()).esearchresult?.idlist||[]).slice(0,max);if(!pmids.length)return[];const fp=new URLSearchParams({db:'pubmed',id:pmids.join(','),retmode:'json',tool:'doctoralia',email});const res=(await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${fp}`)).json()).result||{};return pmids.map(id=>{const a=res[id]||{};return{title:a.title||'',authors:(a.authors||[]).slice(0,4).map(x=>x.name||''),year:(a.pubdate||'').slice(0,4),journal:a.fulljournalname||a.source||'',abstract:'',citations:0,url:`https://pubmed.ncbi.nlm.nih.gov/${id}/`,doi:(a.articleids||[]).find(x=>x.idtype==='doi')?.value||'',source:'PubMed',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ PubMed: '+e.message,'warn');return[];}}
 
-async function searchAX(q,max){try{const arxivUrl=`https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(q.replace(/\s+/g,'+'))}&start=0&max_results=${max}`;const r=await fetch(`https://corsproxy.io/?url=${encodeURIComponent(arxivUrl)}`);if(!r.ok)throw new Error('arXiv '+r.status);const xml=new DOMParser().parseFromString(await r.text(),'application/xml');return Array.from(xml.querySelectorAll('entry')).map(e=>({title:(e.querySelector('title')?.textContent||'').replace(/\s+/g,' ').trim(),authors:Array.from(e.querySelectorAll('author name')).slice(0,4).map(a=>a.textContent),year:(e.querySelector('published')?.textContent||'').slice(0,4),journal:'arXiv',abstract:(e.querySelector('summary')?.textContent||'').slice(0,500).replace(/\s+/g,' '),citations:0,url:e.querySelector('id')?.textContent||'',doi:e.querySelector("link[title='doi']")?.getAttribute('href')||'',source:'arXiv',oa_status:'gold'})).filter(p=>p.title);}catch(e){log('⚠ arXiv: '+e.message,'warn');return[];}}
+async function searchAX(q,max){
+  // Multiple CORS proxies to try in order, with delay between retries
+  const arxivUrl='https://export.arxiv.org/api/query?search_query=all:'+encodeURIComponent(q.replace(/\s+/g,'+'))+'&start=0&max_results='+Math.min(max,30);
+  const proxies=[
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?url=',
+    'https://cors-anywhere.herokuapp.com/',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+  for(let pi=0;pi<proxies.length;pi++){
+    try{
+      if(pi>0) await new Promise(r=>setTimeout(r,1500));
+      const url=proxies[pi]+encodeURIComponent(arxivUrl);
+      const r=await fetch(url,{headers:{'User-Agent':'Doctoralia/1.0 (academic review tool)'}});
+      if(!r.ok){
+        if(r.status===429||r.status===503){log('⚠ arXiv proxy '+pi+' rate limited, trying next...','warn');continue;}
+        throw new Error('arXiv HTTP '+r.status);
+      }
+      const text=await r.text();
+      if(!text||text.includes('<error>')||text.length<100){continue;}
+      const xml=new DOMParser().parseFromString(text,'application/xml');
+      const entries=Array.from(xml.querySelectorAll('entry'));
+      if(!entries.length){continue;}
+      log('✅ arXiv via proxy '+(pi+1),'ok');
+      return entries.map(e=>({
+        title:(e.querySelector('title')?.textContent||'').replace(/\s+/g,' ').trim(),
+        authors:Array.from(e.querySelectorAll('author name')).slice(0,4).map(a=>a.textContent),
+        year:(e.querySelector('published')?.textContent||'').slice(0,4),
+        journal:'arXiv',
+        abstract:(e.querySelector('summary')?.textContent||'').slice(0,500).replace(/\s+/g,' '),
+        citations:0,
+        url:e.querySelector('id')?.textContent||'',
+        doi:e.querySelector("link[title='doi']")?.getAttribute('href')||'',
+        source:'arXiv',
+        oa_status:'gold'
+      })).filter(p=>p.title);
+    }catch(e){
+      log('⚠ arXiv proxy '+(pi+1)+' failed: '+e.message,'warn');
+    }
+  }
+  log('⚠ arXiv: todos los proxies fallaron. Continuando sin arXiv.','warn');
+  return [];
+}
 
 async function searchOA(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({search:q,per_page:Math.min(max,200),page:1,select:'id,title,abstract_inverted_index,publication_year,authorships,primary_location,cited_by_count,doi,open_access',mailto:email});const r=await fetch(`https://api.openalex.org/works?${p}`);if(!r.ok)throw new Error('OA '+r.status);return((await r.json()).results||[]).map(w=>{let abstract='';try{if(w.abstract_inverted_index){const pos=[];Object.entries(w.abstract_inverted_index).forEach(([word,positions])=>positions.forEach(p=>pos.push([p,word])));abstract=pos.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').slice(0,500);}}catch(e){}return{title:w.title||'',authors:(w.authorships||[]).slice(0,4).map(a=>a.author?.display_name||''),year:String(w.publication_year||''),journal:w.primary_location?.source?.display_name||'',abstract,citations:w.cited_by_count||0,url:w.id||'',doi:(w.doi||'').replace('https://doi.org/',''),source:'OpenAlex',oa_status:w.open_access?.oa_status||''};}).filter(p=>p.title);}catch(e){log('⚠ OpenAlex: '+e.message,'warn');return[];}}
 
