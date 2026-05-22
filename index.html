@@ -1648,16 +1648,20 @@ function renderOutputSections(sections,papers,gaps,meta){
     container.appendChild(gapBlock);
   }
 
-  // Build source report
-  const _activeFlags={ss:!!document.getElementById('chk-ss')?.checked,pm:!!document.getElementById('chk-pm')?.checked,ax:!!document.getElementById('chk-ax')?.checked,oa:!!document.getElementById('chk-oa')?.checked,ep:!!document.getElementById('chk-ep')?.checked,cr:!!document.getElementById('chk-cr')?.checked,sc:!!document.getElementById('chk-sc')?.checked};
-  if(Object.values(_sourceResults||{}).some(v=>v>0)){oa.insertBefore(buildSearchReport(_activeFlags), container);}
-  // Insert TOC before sections
-  const _tocEl=buildTOC(sections);
-  if(Object.keys(sections).length>2) oa.insertBefore(_tocEl, container);
+  // Append container to DOM first so insertBefore works
   oa.appendChild(container);
+
+  // Insert search report before container (now valid since container is in DOM)
+  const _activeFlags={ss:!!document.getElementById('chk-ss')?.checked,pm:!!document.getElementById('chk-pm')?.checked,ax:!!document.getElementById('chk-ax')?.checked,oa:!!document.getElementById('chk-oa')?.checked,ep:!!document.getElementById('chk-ep')?.checked,cr:!!document.getElementById('chk-cr')?.checked,sc:!!document.getElementById('chk-sc')?.checked};
+  if(Object.values(_sourceResults||{}).some(v=>v>0)){ oa.insertBefore(buildSearchReport(_activeFlags), container); }
+
+  // Insert TOC before container
+  const _tocEl=buildTOC(sections);
+  if(Object.keys(sections).length>2){ oa.insertBefore(_tocEl, container); }
+
   document.getElementById('outputBadge').style.display='';
-  // Render markdown previews for all sections
-  container.querySelectorAll('.section-body').forEach(body=>{
+  // Render markdown previews
+  container.querySelectorAll('.section-body').forEach(function(body){
     const ta=body.querySelector('textarea');
     const preview=body.querySelector('.md-preview');
     if(ta&&preview) preview.innerHTML=renderMd(ta.value);
