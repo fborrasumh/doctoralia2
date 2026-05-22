@@ -645,18 +645,6 @@ textarea{resize:vertical;min-height:68px}
       </div>
 
 
-      <!-- GRAPHICAL ABSTRACT: Pipeline charts -->
-      <div id="pipelineChartsRow" class="charts-row" style="display:none;margin-top:14px">
-        <div class="chart-card">
-          <div class="chart-card-title">📊 Publicaciones por año</div>
-          <div class="chart-wrap"><canvas id="chartYear"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">🌐 Distribución por fuente</div>
-          <div class="chart-wrap"><canvas id="chartSrc"></canvas></div>
-        </div>
-      </div>
-
       <!-- LOG (collapsible) -->
       <div class="log-wrap">
         <div class="log-toggle" onclick="toggleLog()">▶ Ver log técnico <span id="logCount" style="color:var(--accent)"></span></div>
@@ -671,6 +659,18 @@ textarea{resize:vertical;min-height:68px}
         </div>
       </div>
     </div>
+
+  <!-- GRAPHICAL ABSTRACT: Pipeline charts (outside wizard steps, always visible when tc-wizard active) -->
+  <div id="pipelineChartsRow" class="charts-row" style="display:none;padding:0 28px 20px">
+    <div class="chart-card">
+      <div class="chart-card-title">📊 Publicaciones por año</div>
+      <div class="chart-wrap"><canvas id="chartYear" width="400" height="160"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">🌐 Distribución por fuente</div>
+      <div class="chart-wrap"><canvas id="chartSrc" width="400" height="160"></canvas></div>
+    </div>
+  </div>
 
   </div><!-- /wizard -->
 
@@ -695,11 +695,11 @@ textarea{resize:vertical;min-height:68px}
     <div id="outputChartsRow" class="charts-row" style="display:none;margin-top:4px;margin-bottom:8px">
       <div class="chart-card">
         <div class="chart-card-title">📝 Palabras por sección</div>
-        <div class="chart-wrap"><canvas id="chartSections"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSections" width="400" height="160"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-card-title">🔓 Open Access ratio</div>
-        <div class="chart-wrap" style="height:140px"><canvas id="chartOA"></canvas></div>
+        <div class="chart-wrap" style="height:140px"><canvas id="chartOA" width="400" height="140"></canvas></div>
       </div>
     </div>
 
@@ -722,7 +722,7 @@ textarea{resize:vertical;min-height:68px}
     <div id="gapsChartRow" class="charts-row" style="display:none;grid-template-columns:1fr;margin-bottom:16px">
       <div class="chart-card">
         <div class="chart-card-title">🏆 Top papers por citas</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="chartTopCites"></canvas></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="chartTopCites" width="600" height="200"></canvas></div>
       </div>
     </div>
 
@@ -913,6 +913,8 @@ function showMain(name){
   document.getElementById('topbarTitle').textContent=m.title||name;
   document.getElementById('topbarSub').textContent=m.sub||'';
   if(name==='history')renderHistory();
+  if(name==='gaps'&&window._pendingGapsChart){setTimeout(()=>renderGapsChart(window._pendingGapsChart),200);window._pendingGapsChart=null;}
+  setTimeout(resizeAllCharts, 250);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1132,7 +1134,8 @@ function loadDraft(){
     allPapersStore=d.papers||[];
     gapsStore=d.gaps||'';
     renderOutputSections(sectionTextsStore,d.papers||[],d.gaps||'',d.meta||{});
-    setTimeout(()=>{renderOutputCharts(sectionTextsStore,d.papers||[]);if((d.papers||[]).length)renderGapsChart(d.papers);},150);
+    setTimeout(()=>{renderOutputCharts(sectionTextsStore,d.papers||[]);},300);
+    if((d.papers||[]).length) window._pendingGapsChart=d.papers;
     document.getElementById('partialBadge').style.display='flex';
     document.getElementById('qualityBar').style.display='flex';
     document.getElementById('exportRow').style.display='flex';
@@ -1260,6 +1263,675 @@ function setTopic(chip){
   document.getElementById('topic').value=t;
   onTopicInput(t);
   document.getElementById('topic').focus();
+}
+
+// ── Live section streaming ──────────────────────────────────────────────────
+function initLiveOutput(){
+  const oa=document.getElementById('outputArea');
+  oa.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.id='liveOutputWrap';
+  wrap.className='fi';
+  oa.appendChild(wrap);
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('qualityBar').style.display='none';
+  document.getElementById('exportRow').style.display='none';
+}
+function liveAppendSection(title, content){
+  const wrap=document.getElementById('liveOutputWrap');
+  if(!wrap) return;
+  // Remove placeholder if present
+  const ph=wrap.querySelector('.live-placeholder');
+  if(ph) ph.remove();
+  const block=document.createElement('div');
+  block.className='section-block fi';
+  block.id='live-sec-'+title.replace(/\s+/g,'_');
+  block.innerHTML=`
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-title-text">📄 ${title}</span>
+      <div class="section-actions">
+        <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
+        <span style="color:var(--t3);font-size:12px">▼</span>
+      </div>
+    </div>
+    <div class="section-body" style="max-height:200px;overflow:hidden;position:relative">
+      <div style="white-space:pre-wrap;font-size:13px;color:var(--t2);line-height:1.7;padding:4px 0">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,#fff)"></div>
+    </div>`;
+  wrap.appendChild(block);
+  // Navigate to output tab to show live progress
+  if(document.getElementById('tc-output') && !document.getElementById('tc-output').classList.contains('active')){
+    document.getElementById('tab-output').classList.add('active');
+    document.getElementById('tc-output').classList.add('active');
+    document.querySelectorAll('.tc').forEach(t=>{if(t.id!=='tc-output')t.classList.remove('active');});
+    document.querySelectorAll('.tab').forEach(t=>{if(t.id!=='tab-output')t.classList.remove('active');});
+  }
+  // Show streaming badge
+  const badge=document.getElementById('outputBadge');
+  if(badge) badge.style.display='';
+}
+
+function renderOutputSections(sections,papers,gaps,meta){
+  const oa=document.getElementById('outputArea');oa.innerHTML='';
+  const container=document.createElement('div');container.className='fi';
+
+  // Stats
+  const words=Object.values(sections).join(' ').split(/\s+/).length;
+  ['sPapers','sWords','sSecs','sTime','sScore'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[papers.length,words.toLocaleString(),Object.keys(sections).length,meta.time||'—',meta.score||'N/A'][i];});
+  document.getElementById('statsRow').style.display='grid';
+  ['qbPapers','qbSecs','qbTime','qbScore'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[papers.length,Object.keys(sections).length,meta.time||'—',meta.score||'N/A'][i];});
+  document.getElementById('qualityBar').style.display='flex';
+
+  // Build editable sections
+  Object.entries(sections).forEach(([title,content])=>{
+    const block=document.createElement('div');block.className='section-block';
+    block.innerHTML=`
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-title-text">📄 ${title}</span>
+        <div class="section-actions" onclick="event.stopPropagation()">
+          <button class="btn-ghost" onclick="openRegenPanel(this)" title="Reescribir sección">🔄 Reescribir</button>
+          <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
+          <span style="color:var(--t3);font-size:12px">▼</span>
+        </div>
+      </div>
+      <div class="section-body">
+        <textarea oninput="updateSectionText('${title}',this.value)">${content}</textarea>
+        <div class="regen-panel" id="rp-${title.replace(/\s+/g,'_')}">
+          <div style="font-size:12px;color:var(--amber);margin-bottom:6px">🔄 Reescribir "${title}"</div>
+          <textarea placeholder="Feedback opcional: hazla más corta, añade ejemplos clínicos, enfoca en metodología..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-amber" style="font-size:12px;padding:5px 12px" onclick="regenSection('${title}',this)">Regenerar</button>
+            <button class="btn-ghost" onclick="this.closest('.regen-panel').classList.remove('open')">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(block);
+  });
+
+  // References
+  if(papers.length){
+    const refBlock=document.createElement('div');refBlock.className='section-block';
+    refBlock.innerHTML=`<div class="section-header"><span class="section-title-text">📚 Referencias (${papers.length})</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body" style="padding:12px 16px;font-size:12px;color:var(--t2);line-height:1.8">${papers.slice(0,40).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'<a href="https://doi.org/'+p.doi+'" target="_blank" style="color:var(--accent)">DOI</a>':''} ${p.oa_status?'<span style="color:var(--teal);font-size:10px">✅ '+p.oa_status+'</span>':''}<br>`;}).join('')}</div>`;
+    container.appendChild(refBlock);
+  }
+
+  // Gaps inline
+  if(gaps){
+    const gapBlock=document.createElement('div');gapBlock.className='section-block';
+    gapBlock.innerHTML=`<div class="section-header"><span class="section-title-text">🔍 Research Gaps</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body"><div style="white-space:pre-wrap;font-size:13px;color:var(--t2);line-height:1.7">${gaps}</div></div>`;
+    container.appendChild(gapBlock);
+  }
+
+  oa.appendChild(container);
+  document.getElementById('outputBadge').style.display='';
+}
+
+function toggleSection(header){const body=header.nextElementSibling;body.style.display=body.style.display==='none'?'':'none';}
+function updateSectionText(title,val){sectionTextsStore[title]=val;rebuildFullText();}
+function rebuildFullText(){generatedText=Object.entries(sectionTextsStore).map(([k,v])=>`## ${k}\n\n${v}`).join('\n\n');}
+function openRegenPanel(btn){const rp=btn.closest('.section-body')?.querySelector('.regen-panel');if(rp)rp.classList.toggle('open');}
+
+async function regenSection(title,btn){
+  const apiKey=document.getElementById('apiKey').value.trim();
+  if(!apiKey){alert('Introduce tu API key primero.');return;}
+  const rpanel=btn.closest('.regen-panel');
+  const feedback=rpanel.querySelector('textarea').value.trim();
+  const orig=btn.textContent;
+  btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const lang=document.getElementById('lang').value;
+    const newContent=await callAI(apiKey,[
+      {role:'system',content:`You are an Academic Section Writer. Write in ${lang}.`},
+      {role:'user',content:`Rewrite the "${title}" section of a state-of-the-art review.\n${feedback?'User feedback: '+feedback+'\n':''}\nBase on this context:\n${fmt(allPapersStore,15)}\n\nWrite ~${Math.max(400,Math.floor(parseInt(document.getElementById('wc').value)/Object.keys(sectionTextsStore).length))} words. Academic tone. Cite as [Author et al., Year].`}
+    ],getTokens('crafter'),0.7);
+    sectionTextsStore[title]=newContent;
+    // Update textarea
+    const textareas=document.querySelectorAll('.section-header');
+    textareas.forEach(h=>{if(h.querySelector('.section-title-text')?.textContent.includes(title)){const ta=h.nextElementSibling?.querySelector('textarea');if(ta)ta.value=newContent;}});
+    rebuildFullText();
+    rpanel.classList.remove('open');
+    log(`✅ Sección "${title}" regenerada.`,'ok');
+  }catch(e){log('❌ Regenerar: '+e.message,'err');}
+  finally{btn.textContent=orig;btn.disabled=false;}
+}
+
+// ═══════════════════════════════════════════════════
+//  MAIN PIPELINE
+// ═══════════════════════════════════════════════════
+async function startGeneration(){
+  if(isRunning)return;
+  const apiKey=document.getElementById('apiKey').value.trim();
+  const topic=document.getElementById('topic').value.trim();
+  if(!apiKey||!apiKey.startsWith('sk-')){alert('Introduce una API key de OpenAI válida (sk-...)');return;}
+  const _activeSources=['ss','pm','ax','oa','ep','cr','sc'].filter(s=>document.getElementById('chk-'+s)?.checked);
+  if(_activeSources.length===0){
+    const errEl=document.getElementById('sources-error');
+    if(errEl){errEl.style.display='block';setTimeout(()=>errEl.style.display='none',5000);}
+    showMain('wizard');goWizard(2);
+    log('⚠️ Sin fuentes activas — activa al menos una.','warn');
+    return;
+  }
+  if(!topic){alert('Introduce el tema de la revisión');showMain('wizard');goWizard(1);document.getElementById('topic').focus();return;}
+  if(document.getElementById('saveKey').checked)localStorage.setItem('doctoralia_apikey',apiKey);
+
+  isRunning=true;tStart=Date.now();logCount=0;
+  shouldStop=false;
+  document.getElementById('btnGen').disabled=true;
+  document.getElementById('btnGen').innerHTML='<span class="pulsing">⏳</span> Generando...';
+  document.getElementById('tab-output').innerHTML='📄 Artículo <span id="outputBadge" class="tab-badge" style=""><span class="streaming-dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 1s infinite"></span></span>';
+  document.getElementById('btnStop').disabled=false;
+  document.getElementById('btnGenWizard').disabled=true;
+  document.getElementById('btnStopWizard').disabled=false;
+  document.getElementById('logPanel').innerHTML='';
+  goWizard(4);showMain('wizard');
+  showHP();buildHPSteps();setHPStep(0);
+  [1,2,3,4,5].forEach(n=>setPhase(n,''));
+
+  const wc=parseInt(document.getElementById('wc').value);
+  const cite=document.getElementById('citeStyle').value;
+  const lang=document.getElementById('lang').value;
+  const kw=document.getElementById('keywords').value.trim();
+  const instruct=document.getElementById('instructions').value.trim();
+  const fastMode=document.getElementById('tog-fast').classList.contains('on');
+  const doGaps=document.getElementById('tog-gaps').classList.contains('on');
+  const doBiblio=document.getElementById('tog-biblio').classList.contains('on');
+  const doThread=document.getElementById('tog-thread').classList.contains('on');
+  const doEnh=document.getElementById('tog-enhancer').classList.contains('on');
+  const doPrisma=document.getElementById('tog-prisma').classList.contains('on');
+  const doSynth=document.getElementById('tog-synth').classList.contains('on');
+  const temp=parseFloat(document.getElementById('temperature').value)||0.7;
+  const maxQ=parseInt(document.getElementById('maxQueries').value)||4;
+  const topP=parseInt(document.getElementById('topPapers').value)||25;
+  const useSS=document.getElementById('chk-ss').checked;
+  const usePM=document.getElementById('chk-pm').checked;
+  const useAX=document.getElementById('chk-ax').checked;
+  const useOA=document.getElementById('chk-oa').checked;
+  const useEP=document.getElementById('chk-ep').checked;
+  const useSC=document.getElementById('chk-sc').checked;
+  const useCR=document.getElementById('chk-cr').checked;
+  const limSS=parseInt(document.getElementById('lim-ss').value)||30;
+  const limPM=parseInt(document.getElementById('lim-pm').value)||20;
+  const limAX=parseInt(document.getElementById('lim-ax').value)||20;
+  const limOA=parseInt(document.getElementById('lim-oa').value)||20;
+  const limEP=parseInt(document.getElementById('lim-ep').value)||20;
+  const limSC=parseInt(document.getElementById('lim-sc')?.value)||20;
+  const limCR=parseInt(document.getElementById('lim-cr').value)||20;
+
+  try{
+    // ── FASE 1: RESEARCH ──────────────────────────
+    setPhase(1,'active');setHPStep(0);
+    log('📚 ── FASE 1: RESEARCH ──────────────────────','info');
+
+    log('🤖 Scout: planificando búsqueda...','info');
+    let plan={research_questions:[],search_terms:[topic+(kw?' '+kw:'')],key_areas:[]};
+    try{
+      const raw=await callAI(apiKey,[{role:'user',content:`Plan a state-of-the-art review on: "${topic}"\nGenerate JSON:\n- research_questions: 4-5 questions\n- search_terms: ${maxQ} specific queries\n- key_areas: 3-5 thematic areas\nJSON only.`}],getTokens('scout'),0.5);
+      plan=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      log(`✅ Scout: ${(plan.key_areas||[]).join(' · ')}`,'ok');
+    }catch(e){log('⚠ Scout JSON fallido, usando query directa.','warn');}
+
+    const queries=(plan.search_terms||[topic]).slice(0,maxQ).map(q=>kw?`${q} ${kw}`:q);
+
+    setHPStep(0);
+    let allPapers=[];
+    for(let qi=0;qi<queries.length;qi++){
+      if(shouldStop)throw new Error('__STOPPED__');
+      const q=queries[qi];
+      log(`🔍 Query ${qi+1}/${queries.length}: "${q.slice(0,50)}"`,'info');
+      if(useSS){const p=await searchSS(q,limSS);log(`  SS: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(usePM){const p=await searchPM(q,limPM);log(`  PubMed: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useAX){const p=await searchAX(q,limAX);log(`  arXiv: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useOA){const p=await searchOA(q,limOA);log(`  OpenAlex: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useEP){const p=await searchEPMC(q,limEP);log(`  EuropePMC: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useSC){const p=await searchScopus(q,limSC);log(`  Scopus: ${p.length}`,'ok');allPapers.push(...p);}
+      if(shouldStop)throw new Error('__STOPPED__');
+      if(useCR){const p=await searchCR(q,limCR);log(`  CrossRef: ${p.length}`,'ok');allPapers.push(...p);}
+    }
+    allPapers=sortPapers(dedup(allPapers));
+    allPapersStore=allPapers;
+    log(`📊 Total deduplicado: ${allPapers.length} papers`,'ok');
+    // 📊 Render pipeline charts immediately after search
+    if(allPapers.length) renderPipelineCharts(allPapers);
+
+    const papersFormatted=fmt(allPapers,topP);
+
+    setHPStep(1);
+    log('🤖 Signal: análisis de relevancia...','info');
+    const signalAnalysis=await callAI(apiKey,[
+      {role:'system',content:'You are a Citation Finder and academic signal analyst.'},
+      {role:'user',content:`Analyze ${allPapers.length} papers.\n\nPAPERS:\n${papersFormatted}\n\n1. TOP 15 most relevant papers\n2. Key venues\n3. Thematic clusters (3-5)\n4. Temporal trends`}
+    ],getTokens('signal'),temp);
+    log('✅ Signal completado.','ok');
+
+    log('🤖 Scribe: revisión base comprehensiva...','info');
+    const mainReview=await callAI(apiKey,[
+      {role:'system',content:`You are a State of the Art Reviewer. Write in ${lang}.`},
+      {role:'user',content:`Write a comprehensive state-of-the-art review on: "${topic}"\n\nBased on:\n${papersFormatted}\n\nCover: 1) Historical evolution 2) Current state 3) Methods 4) Key findings 5) Gaps\nCite as [Author et al., Year].${instruct?'\n\nInstructions: '+instruct:''}`}
+    ],getTokens('scribe'),temp);
+    log(`✅ Scribe: ${mainReview.split(' ').length} palabras.`,'ok');
+
+    let trendAnalysis='';
+    if(doBiblio){
+      log('🤖 DataAnalyst: tendencias bibliométricas...','info');
+      const pd=allPapers.slice(0,50).map(p=>`- ${p.title} (${p.year||'?'}) | ${p.journal||'?'} | Cites: ${p.citations} | ${p.source}`).join('\n');
+      trendAnalysis=await callAI(apiKey,[{role:'system',content:`You are an Academic Trend Analyzer. Write in ${lang}.`},{role:'user',content:`Analyze publication trends:\n${pd}\n\n1. Volume by year 2. Top venues 3. Topic evolution 4. Emerging areas.`}],getTokens('data_analyst'),temp);
+      log('✅ DataAnalyst completado.','ok');
+    }
+
+    let gapsText='';
+    if(doGaps){
+      log('🤖 GapDetector: identificando brechas...','info');
+      const abstracts=allPapers.slice(0,30).map((p,i)=>`[${i+1}] ${p.title} (${p.year||'?'}): ${p.abstract||'(no abstract)'}`).join('\n\n');
+      const rqs=(plan.research_questions||[]).map(q=>`- ${q}`).join('\n')||`- What is the current state of ${topic}?`;
+      gapsText=await callAI(apiKey,[{role:'system',content:`You are a Research Gap Identifier. Write in ${lang}.`},{role:'user',content:`Analyze gaps for: "${topic}"\n\nRESEARCH QUESTIONS:\n${rqs}\n\nABSTRACTS:\n${abstracts}\n\nFor each gap:\nGAP [N]: [title]\nStatus: Unanswered / Partially answered\nEvidence: [what exists and why it falls short]\nRecommended study: [type needed]\n\n4-6 specific gaps.`}],getTokens('gap_detector'),temp);
+      gapsStore=gapsText;
+      log('✅ GapDetector completado.','ok');
+    }
+
+    setPhase(1,'done');setPhase(2,'active');
+
+    // ── FASE 2: STRUCTURE ─────────────────────────
+    setHPStep(2);
+    log('🏗️ ── FASE 2: STRUCTURE ──────────────────────','info');
+    let structure={"Introduction":800,"Background":1200,"Current State of the Art":2000,"Methodological Approaches":1500,"Key Findings":1200,"Research Gaps and Future Directions":700,"Discussion":600,"Conclusion":500};
+    try{
+      const sr=await callAI(apiKey,[{role:'user',content:`Design sections for review on: "${topic}"\n~${wc} words. In ${lang}.\n${instruct?'Instructions: '+instruct+'\n':''}\nReturn JSON: keys=section titles, values=word counts. 6-8 sections. Sum≈${wc}.\nJSON only.`}],getTokens('architect'),0.5);
+      const parsed=JSON.parse(sr.replace(/```json|```/g,'').trim());
+      if(typeof parsed==='object'&&Object.keys(parsed).length>3)structure=parsed;
+      log(`✅ Architect: ${Object.keys(structure).join(' → ')}`,'ok');
+    }catch(e){log('⚠ Usando estructura por defecto.','warn');}
+
+    setPhase(2,'done');setPhase(3,'active');
+
+    // ── FASE 3: WRITING ───────────────────────────
+    initLiveOutput();
+    setHPStep(3);
+    log('✍️ ── FASE 3: WRITING ─────────────────────────','info');
+    const sections=Object.keys(structure);
+    const sectionTexts={};let prevContent='';
+
+    for(let i=0;i<sections.length;i++){
+      const sec=sections[i];const tgt=structure[sec];
+      log(`✍️ Crafter: "${sec}" (~${tgt} palabras)...`,'info');
+      const text=await callAI(apiKey,[
+        {role:'system',content:`You are an Academic Section Writer. Write in ${lang}. Style: ${cite}.`},
+        {role:'user',content:`Write the "${sec}" section.\nTopic: ${topic}\nTarget: ~${tgt} words\n${instruct?'Instructions: '+instruct+'\n':''}\nGaps:\n${gapsText?gapsText.slice(0,600):'N/A'}\n\nBase on:\n${mainReview}\n\nContext:\n${signalAnalysis}\n\nCite as [Author et al., Year].`}
+      ],getTokens('crafter'),temp);
+
+      if(doThread&&prevContent&&i>0){await callAI(apiKey,[{role:'user',content:`Check coherence:\nPREV (last 400):\n${prevContent.slice(-400)}\nCURR (first 400):\n${text.slice(0,400)}\nNote issues briefly.`}],getTokens('thread'),0.3);}
+
+      let finalText=text;
+      try{finalText=await callAI(apiKey,[{role:'system',content:`You are a Voice Refiner. Write in ${lang}.`},{role:'user',content:`Refine academic voice:\n\n${text}\n\nImprove: 1) formal register 2) sentence variety 3) transitions 4) remove redundancies.\nPreserve citations. Return text only.`}],getTokens('narrator'),temp);}catch(e){}
+
+      sectionTexts[sec]=finalText;prevContent=finalText;
+      liveAppendSection(sec,finalText);
+      log(`✅ "${sec}": ${finalText.split(' ').length} palabras`,'ok');
+      // Autosave after each section
+      saveDraft(sectionTexts,allPapers,gapsText,{topic,time:Math.round((Date.now()-tStart)/1000)+'s'});
+    }
+    sectionTextsStore={...sectionTexts};
+    setPhase(3,'done');
+
+    // ── FASE 4: VALIDATION ────────────────────────
+    let qs='N/A';
+    if(!fastMode){
+      setPhase(4,'active');setHPStep(4);
+      log('🔍 ── FASE 4: VALIDATION ─────────────────────','info');
+      const refs=allPapers.slice(0,30).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a}. "${p.title}". ${p.journal||''}, ${p.year||''}.`;}).join('\n');
+      const fullText=Object.values(sectionTexts).join('\n\n');
+      const chunks=[];for(let i=0;i<fullText.length;i+=5000)chunks.push(fullText.slice(i,i+5000));
+      for(let i=0;i<Math.min(chunks.length,3);i++){
+        await callAI(apiKey,[{role:'user',content:`Flag unsupported claims:\n\n${chunks[i]}\n\n1) Strong claims without citation 2) Overgeneralizations. Be brief.`}],getTokens('skeptic'),0.3);
+        await callAI(apiKey,[{role:'user',content:`Validate citations:\n\n${chunks[i]}\n\nRefs:\n${refs}\n\nCheck: text-ref match, consistency.`}],getTokens('verifier'),0.3);
+      }
+      const scores=[];
+      for(const[sec,txt]of Object.entries(sectionTexts)){
+        const rev=await callAI(apiKey,[{role:'user',content:`Peer review:\n\n${txt.slice(0,2000)}\n\nScore 1-5: RIGOR, COVERAGE, CLARITY, ORIGINALITY, RELEVANCE.\nEnd with: OVERALL: X/5`}],getTokens('referee'),0.3);
+        const m=rev.match(/OVERALL[:\s]+(\d+(?:\.\d+)?)\s*\/\s*5/i);if(m)scores.push(parseFloat(m[1]));
+      }
+      if(scores.length){const avg=scores.reduce((a,b)=>a+b,0)/scores.length;qs=`${Math.round(avg/5*100)}/100 (avg ${avg.toFixed(1)}/5)`;log(`📊 Quality Score: ${qs}`,'ok');}
+      setPhase(4,'done');
+    }
+    qualityScore=qs;
+
+    // ── FASE 5: POLISH ────────────────────────────
+    let abstract='',keywords='',highlights='';
+    if(!fastMode){
+      setPhase(5,'active');setHPStep(5);
+      log('✨ ── FASE 5: POLISH ──────────────────────────','info');
+      for(const sec of Object.keys(sectionTexts)){
+        try{sectionTexts[sec]=await callAI(apiKey,[{role:'system',content:`You are a Final Editor. Write in ${lang}.`},{role:'user',content:`Final edit:\n\n${sectionTexts[sec]}\n\nFix grammar, terminology, awkward phrasing. Return text only.`}],getTokens('polish'),temp);}catch(e){}
+      }
+      if(doEnh){
+        log('🤖 Enhancer: abstract + keywords + highlights...','info');
+        const enhRaw=await callAI(apiKey,[{role:'system',content:`You are a Publication Enhancer. Write in ${lang}.`},{role:'user',content:`Generate:\n\n${Object.values(sectionTexts).join('\n\n').slice(0,6000)}\n\nABSTRACT (250 words): Background/Methods/Results/Conclusions\nKEYWORDS: 6-8 separated by semicolons\nHIGHLIGHTS: 5 bullets max 85 chars each\n\nUse exact labels: ABSTRACT:, KEYWORDS:, HIGHLIGHTS:`}],getTokens('enhancer'),temp);
+        const absM=enhRaw.match(/ABSTRACT:([\s\S]*?)(?=KEYWORDS:|$)/i);
+        const kwM=enhRaw.match(/KEYWORDS:([\s\S]*?)(?=HIGHLIGHTS:|$)/i);
+        const hlM=enhRaw.match(/HIGHLIGHTS:([\s\S]*?)$/i);
+        abstract=absM?absM[1].trim():'';keywords=kwM?kwM[1].trim():'';highlights=hlM?hlM[1].trim():'';
+      }
+      setPhase(5,'done');
+    }
+
+    // Auxiliares
+    let prismaText='';
+    if(doPrisma){
+      const srcList=[useSS?'Semantic Scholar':'',usePM?'PubMed':'',useAX?'arXiv':'',useOA?'OpenAlex':'',useEP?'Europe PMC':'',useCR?'CrossRef':''].filter(Boolean).join(', ');
+      prismaText=await callAI(apiKey,[{role:'system',content:`You are a Methodology Designer. Write in ${lang}.`},{role:'user',content:`Write METHODOLOGY section (PRISMA).\n\nSources: ${srcList}\nSearch terms: ${queries.join('; ')}\nPeriod: last ${document.getElementById('years').value} years\nTotal papers: ${allPapers.length}\n\nCover: search strategy, inclusion/exclusion, screening, quality assessment. ~400 words.`}],getTokens('methodology'),temp);
+    }
+    let synthText='';
+    if(doSynth){synthText=await callAI(apiKey,[{role:'system',content:`You are a Findings Synthesizer. Write in ${lang}.`},{role:'user',content:`Synthesize:\n\n${Object.values(sectionTexts).join('\n\n').slice(0,5000)}\n\n5-7 bullets: significant findings, consensus, gaps, implications. Max 2 sentences each.`}],getTokens('results_synthesizer'),temp);}
+
+    // Build display sections (add aux sections)
+    const displaySections={...sectionTexts};
+    if(abstract)displaySections['Abstract']=abstract+(keywords?'\n\n**Keywords:** '+keywords:'')+(highlights?'\n\n**Highlights:**\n'+highlights:'');
+    if(synthText)displaySections['Executive Summary']=synthText;
+    if(prismaText)displaySections['Methodology (PRISMA)']=prismaText;
+    if(trendAnalysis)displaySections['Bibliometric Analysis']=trendAnalysis;
+
+    // Assemble full text for download
+    const elapsed=Math.round((Date.now()-tStart)/1000);
+    const srcList2=[useSS?'Semantic Scholar':'',usePM?'PubMed':'',useAX?'arXiv':'',useOA?'OpenAlex':'',useEP?'Europe PMC':'',useCR?'CrossRef':'',useSC?'Scopus':''].filter(Boolean).join(', ');
+    let full=`# ${topic}\n## State-of-the-Art Review\n\n`;
+    full+=`*Doctoralia · ${new Date().toLocaleDateString('es')} · ${document.getElementById('model').value} · ${cite}*\n`;
+    full+=`*Fuentes: ${srcList2} · Papers: ${allPapers.length} · Tiempo: ${elapsed}s · Score: ${qs}*\n\n---\n\n`;
+    Object.entries(displaySections).forEach(([sec,txt])=>{full+=`## ${sec}\n\n${txt}\n\n`;});
+    full+=`---\n\n## References\n\n`;
+    allPapers.slice(0,40).forEach((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');full+=`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'DOI: https://doi.org/'+p.doi:p.url||''} ${p.oa_status?'[OA: '+p.oa_status+']':''}\n`;});
+    full+=`\n---\n\n## Appendix: Paper Database (${allPapers.length} papers)\n\n`;
+    full+=`| # | Title | Authors | Year | Source | Cites | OA | URL |\n|---|-------|---------|------|--------|-------|----|-----|\n`;
+    allPapers.forEach((p,i)=>{const a=p.authors.slice(0,2).join(', ')+(p.authors.length>2?'...':'');const u=p.url?`[link](${p.url})`:'—';full+=`| ${i+1} | ${p.title.slice(0,50).replace(/\|/g,'/')} | ${a||'—'} | ${p.year||'—'} | ${p.source} | ${p.citations} | ${p.oa_status||'—'} | ${u} |\n`;});
+    generatedText=full;
+    sectionTextsStore={...displaySections};
+
+    // ── UPDATE UI ─────────────────────────────────
+    setHPStep(6);
+    const words=Object.values(displaySections).join(' ').split(/\s+/).length;
+    log(`🎉 ¡Completado en ${elapsed}s! ${allPapers.length} papers · ${sections.length} secciones · Score: ${qs}`,'ok');
+
+    renderOutputSections(displaySections,allPapers,gapsText,{time:elapsed+'s',score:qs});
+    document.getElementById('exportRow').style.display='flex';
+
+    // Gaps tab
+    if(gapsText){
+      const ga=document.getElementById('gapsArea');ga.innerHTML='';
+      const gl=document.createElement('div');gl.className='gaps-list fi';
+      gapsText.split(/\nGAP \[?\d+\]?:/i).filter(Boolean).forEach((g,i)=>{const lines=g.trim().split('\n');const card=document.createElement('div');card.className='gap-card';card.innerHTML=`<h4>GAP ${i+1}: ${lines[0].replace(/^[:.\s]+/,'').trim()}</h4><p>${lines.slice(1).join('<br>').trim()}</p>`;gl.appendChild(card);});
+      ga.appendChild(gl);
+      // Store for lazy render when gaps tab is opened
+      window._pendingGapsChart = allPapers;
+    }
+
+    // Save to history
+    saveToHistory(topic,words,sections.length,elapsed+'s');
+    localStorage.removeItem('doctoralia_draft');
+
+    showMain('output');
+    document.getElementById('outputBadge').style.display='';
+    setTimeout(()=>{renderOutputCharts(displaySections,allPapers);resizeAllCharts();},300);
+
+  }catch(e){
+    if(e.message==='__STOPPED__'){
+      log('⏹ Generación detenida por el usuario.','warn');
+    } else {
+      log('❌ Error: '+e.message,'err');
+      if(e.message.includes('401'))log('💡 API key incorrecta. Verifica en platform.openai.com/api-keys','warn');
+      else if(e.message.includes('429'))log('💡 Rate limit. Espera unos segundos.','warn');
+      else if(e.message.includes('insufficient_quota'))log('💡 Cuota agotada. Añade créditos en platform.openai.com/billing','warn');
+    }
+    // Show partial draft if something was generated
+    if(Object.keys(sectionTextsStore).length>0){
+      log('💾 Guardando borrador parcial...','warn');
+      renderOutputSections(sectionTextsStore,allPapersStore,gapsStore,{time:Math.round((Date.now()-tStart)/1000)+'s',score:'N/A'});
+      document.getElementById('partialBadge').style.display='flex';
+      document.getElementById('exportRow').style.display='flex';
+      document.getElementById('outputBadge').style.display='';
+    }
+  }finally{
+    isRunning=false;
+    shouldStop=false;
+    document.getElementById('btnGen').disabled=false;document.getElementById('btnGen').innerHTML='▶ Generar';
+    document.getElementById('btnStop').disabled=true;
+    document.getElementById('btnGenWizard').disabled=false;document.getElementById('btnGenWizard').innerHTML='▶ Generar revisión';
+    document.getElementById('btnStopWizard').disabled=true;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════
+function slug(){return(document.getElementById('topic').value||'review').replace(/\s+/g,'_').slice(0,40);}
+function exportMarkdown(){if(!generatedText)return;dl(`doctoralia_${slug()}.md`,generatedText,'text/markdown');log('⬇ Markdown descargado.','ok');}
+function exportTxt(){if(!generatedText)return;dl(`doctoralia_${slug()}.txt`,generatedText,'text/plain');log('⬇ Texto descargado.','ok');}
+
+function exportWord(){
+  if(!generatedText)return;
+  const date=new Date().toLocaleDateString('es');
+  let html=generatedText.replace(/^# (.+)$/mg,'<h1>$1</h1>').replace(/^## (.+)$/mg,'<h2>$1</h2>').replace(/^### (.+)$/mg,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>').replace(/^---$/mg,'<hr>').replace(/^\| .+$/mg,'').replace(/^- (.+)$/mg,'<li>$1</li>').split('\n\n').map(p=>p.startsWith('<')?p:`<p>${p}</p>`).join('\n');
+  const doc=`<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page{margin:2.5cm 3cm}body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.6}h1{font-size:18pt;text-align:center;color:#1a3a5c}h2{font-size:14pt;color:#1a3a5c;border-bottom:1pt solid #ccc;margin-top:18pt}p{text-align:justify;margin:6pt 0}.meta{font-size:10pt;color:#666;text-align:center;font-style:italic}</style></head><body><p class="meta">Doctoralia · ${date} · Papers: ${allPapersStore.length}</p>${html}</body></html>`;
+  dl(`doctoralia_${slug()}.doc`,doc,'application/msword');
+  log('⬇ Word descargado. Abre con Microsoft Word o LibreOffice.','ok');
+}
+
+function exportLatex(){
+  if(!generatedText)return;
+  const date=new Date().toISOString().slice(0,10);
+  const esc=t=>(t||'').replace(/\\/g,'\\textbackslash{}').replace(/&/g,'\\&').replace(/%/g,'\\%').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/_/g,'\\_').replace(/\{/g,'\\{').replace(/\}/g,'\\}').replace(/~/g,'\\textasciitilde{}').replace(/\^/g,'\\textasciicircum{}');
+  let body='',titleSet=false;
+  for(const line of generatedText.split('\n')){
+    if(line.startsWith('# ')&&!titleSet){body+=`\\title{${esc(line.slice(2))}}\n\\maketitle\n\n`;titleSet=true;}
+    else if(line.startsWith('## ')){body+=`\n\\section{${esc(line.slice(3))}}\n`;}
+    else if(line.startsWith('### ')){body+=`\n\\subsection{${esc(line.slice(4))}}\n`;}
+    else if(line.startsWith('**Keywords:**')){body+=`\\noindent\\textbf{Keywords:} ${esc(line.replace('**Keywords:**','').trim())}\n\n`;}
+    else if(line.startsWith('- ')){body+=`\\begin{itemize}\\item ${esc(line.slice(2))}\\end{itemize}\n`;}
+    else if(line.match(/^\[\d+\] /)){body+=`\\noindent${esc(line)}\n\n`;}
+    else if(line==='---'){body+=`\n\\vspace{6mm}\\hrule\\vspace{6mm}\n`;}
+    else if(line.match(/^\*/)){/* skip meta */}
+    else if(line.trim()){body+=esc(line)+'\n\n';}
+  }
+  const latex=`% Doctoralia · ${date}\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage{hyperref}\n\\usepackage{geometry}\n\\usepackage{times}\n\\geometry{margin=2.5cm}\n\\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}\n\\author{Doctoralia Review Generator}\n\\date{${date}}\n\\begin{document}\n\n${body}\n\n\\end{document}\n`;
+  dl(`doctoralia_${slug()}.tex`,latex,'text/plain');
+  log('⬇ LaTeX descargado. Compila con pdflatex o en overleaf.com.','ok');
+}
+
+function copyClipboard(){if(!generatedText)return;navigator.clipboard.writeText(generatedText).then(()=>{log('📋 Copiado al portapapeles.','ok');const btn=event.target;const o=btn.textContent;btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent=o,2000);});}
+function dl(filename,content,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  SCOPUS SEARCH ENGINE                                          ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function getScopusKey(){
+  return document.getElementById('scopusApiKey')?.value?.trim()
+       || localStorage.getItem('doctoralia_scopus_key') || '';
+}
+async function searchScopus(q, max){
+  const key = getScopusKey();
+  // Use developer key (free tier): 25 results/query, abstract access
+  const devKey = key || 'd7b2b8f4c52a42db6b12f0d3aa4c8e19'; // fallback dev key
+  try{
+    const encoded = encodeURIComponent(q);
+    const url = `https://api.elsevier.com/content/search/scopus?query=${encoded}&count=${Math.min(max,25)}&field=dc:title,dc:creator,prism:publicationName,prism:coverDate,citedby-count,prism:doi,dc:description,prism:url&apiKey=${devKey}&httpAccept=application/json`;
+    const r = await fetch(url, {headers:{'Accept':'application/json','X-ELS-APIKey': devKey}});
+    if(!r.ok) throw new Error('Scopus HTTP '+r.status);
+    const data = await r.json();
+    const entries = data?.['search-results']?.entry || [];
+    return entries.map(e=>({
+      title: e['dc:title']||'',
+      authors: (e['dc:creator']||'').split(';').slice(0,4).map(a=>a.trim()),
+      year: (e['prism:coverDate']||'').slice(0,4),
+      journal: e['prism:publicationName']||'',
+      abstract: (e['dc:description']||'').slice(0,500),
+      citations: parseInt(e['citedby-count']||0),
+      doi: (e['prism:doi']||''),
+      url: e['prism:url']||'',
+      source: 'Scopus',
+      oa_status: ''
+    })).filter(p=>p.title);
+  }catch(e){log('⚠ Scopus: '+e.message,'warn');return[];}
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  GRAPHICAL ABSTRACT CHARTS                                     ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const CHART_PALETTE = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#15803d'];
+let _chartInstances = {};
+
+function destroyChart(id){
+  if(_chartInstances[id]){
+    try{_chartInstances[id].destroy();}catch(e){}
+    delete _chartInstances[id];
+  }
+}
+
+// Core: render a chart only when its canvas is visible in the DOM
+// If not visible yet, wait for it with MutationObserver + retry
+function safeRenderChart(canvasId, chartConfig, attempt){
+  attempt = attempt || 0;
+  if(attempt > 30) return; // give up after 3 seconds
+  const canvas = document.getElementById(canvasId);
+  if(!canvas){ setTimeout(()=>safeRenderChart(canvasId, chartConfig, attempt+1), 100); return; }
+  // Check if canvas has non-zero dimensions (visible)
+  const rect = canvas.getBoundingClientRect();
+  const parent = canvas.parentElement;
+  const isVisible = rect.width > 0 && rect.height > 0 &&
+    getComputedStyle(parent).display !== 'none' &&
+    getComputedStyle(canvas.closest('.tc') || document.body).display !== 'none';
+  if(!isVisible){
+    setTimeout(()=>safeRenderChart(canvasId, chartConfig, attempt+1), 100);
+    return;
+  }
+  destroyChart(canvasId);
+  try{
+    _chartInstances[canvasId] = new Chart(canvas, chartConfig);
+  }catch(e){ console.warn('Chart error on', canvasId, e); }
+}
+
+// Resize all visible charts (call after tab switch)
+function resizeAllCharts(){
+  Object.entries(_chartInstances).forEach(([id, chart])=>{
+    try{ chart.resize(); }catch(e){}
+  });
+}
+
+function renderPipelineCharts(papers){
+  const row = document.getElementById('pipelineChartsRow');
+  if(!row) return;
+  row.style.display = 'grid';
+
+  // ── Bar: papers por año
+  const yearMap = {};
+  papers.forEach(p=>{const y=parseInt(p.year);if(y>1990&&y<=2026)yearMap[y]=(yearMap[y]||0)+1;});
+  const years = Object.keys(yearMap).sort();
+  if(years.length){
+    safeRenderChart('chartYear', {
+      type:'bar',
+      data:{
+        labels: years,
+        datasets:[{label:'Papers', data:years.map(y=>yearMap[y]),
+          backgroundColor:'rgba(37,99,235,0.75)', borderColor:'#2563eb',
+          borderWidth:1, borderRadius:4}]
+      },
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{callbacks:{title:i=>'Año '+i[0].label}}},
+        scales:{y:{beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10}, stepSize:1}},
+                x:{grid:{display:false}, ticks:{font:{size:10}, maxRotation:45}}}}
+    });
+  }
+
+  // ── Donut: por fuente
+  const srcMap = {};
+  papers.forEach(p=>{const s=p.source||'Otro'; srcMap[s]=(srcMap[s]||0)+1;});
+  const srcLabels = Object.keys(srcMap);
+  if(srcLabels.length){
+    safeRenderChart('chartSrc', {
+      type:'doughnut',
+      data:{
+        labels: srcLabels,
+        datasets:[{data:srcLabels.map(s=>srcMap[s]),
+          backgroundColor:CHART_PALETTE.slice(0,srcLabels.length),
+          borderWidth:2, borderColor:'#fff', hoverOffset:6}]
+      },
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'right', labels:{font:{size:10}, boxWidth:12, padding:6}},
+          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw} papers`}}}}
+    });
+  }
+}
+
+function renderOutputCharts(sections, papers){
+  const row = document.getElementById('outputChartsRow');
+  if(!row) return;
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 1fr';
+
+  // ── Pie: palabras por sección
+  const labels = Object.keys(sections).filter(k=>k!=='Appendix');
+  const wordCounts = labels.map(k=>(sections[k]||'').split(/\s+/).filter(Boolean).length);
+  if(labels.length){
+    safeRenderChart('chartSections', {
+      type:'pie',
+      data:{
+        labels,
+        datasets:[{data:wordCounts,
+          backgroundColor:CHART_PALETTE.slice(0,labels.length),
+          borderWidth:2, borderColor:'#fff', hoverOffset:4}]
+      },
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'right', labels:{font:{size:9}, boxWidth:10, padding:5}},
+          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw} pal.`}}}}
+    });
+  }
+
+  // ── Donut: Open Access
+  if(papers.length){
+    const oaCount = papers.filter(p=>p.oa_status&&p.oa_status!=='closed'&&p.oa_status!=='').length;
+    const closedCount = papers.length - oaCount;
+    safeRenderChart('chartOA', {
+      type:'doughnut',
+      data:{
+        labels:['Open Access','Cerrado'],
+        datasets:[{data:[oaCount, closedCount],
+          backgroundColor:['rgba(5,150,105,0.8)','rgba(209,213,219,0.6)'],
+          borderWidth:2, borderColor:'#fff', hoverOffset:4}]
+      },
+      options:{responsive:true, maintainAspectRatio:false, cutout:'60%',
+        plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:10, padding:6}},
+          tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw}`}}}}
+    });
+  }
+}
+
+function renderGapsChart(papers){
+  const row = document.getElementById('gapsChartRow');
+  if(!row || !papers.length) return;
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr';
+
+  const top = [...papers].sort((a,b)=>(b.citations||0)-(a.citations||0)).slice(0,8);
+  const hasCites = top.some(p=>(p.citations||0)>0);
+  if(!hasCites) return;
+
+  safeRenderChart('chartTopCites', {
+    type:'bar',
+    data:{
+      labels: top.map(p=>(p.title||'').slice(0,40)+((p.title||'').length>40?'…':'')),
+      datasets:[{label:'Citas', data:top.map(p=>p.citations||0),
+        backgroundColor:'rgba(5,150,105,0.75)', borderColor:'#059669',
+        borderWidth:1, borderRadius:4}]
+    },
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10}}},
+              y:{grid:{display:false}, ticks:{font:{size:10}, maxTicksLimit:8}}}}
+  });
 }
 
 // ── Live section streaming ──────────────────────────────────────────────────
@@ -1776,136 +2448,6 @@ async function searchScopus(q, max){
   }catch(e){log('⚠ Scopus: '+e.message,'warn');return[];}
 }
 
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  GRAPHICAL ABSTRACT CHARTS                                     ║
-// ╚══════════════════════════════════════════════════════════════════╝
-const CHART_PALETTE = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#15803d'];
-let _chartInstances = {};
-
-function destroyChart(id){
-  if(_chartInstances[id]){_chartInstances[id].destroy();delete _chartInstances[id];}
-}
-
-function renderPipelineCharts(papers, sections){
-  const container = document.getElementById('pipelineChartsRow');
-  if(!container) return;
-  container.style.display = 'grid';
-
-  // ── 1. Papers por año (bar) ──────────────────────────────────────
-  const yearMap = {};
-  papers.forEach(p=>{const y=parseInt(p.year);if(y>2000&&y<=2026)yearMap[y]=(yearMap[y]||0)+1;});
-  const years = Object.keys(yearMap).sort();
-  destroyChart('chartYear');
-  const ctxYear = document.getElementById('chartYear');
-  if(ctxYear && years.length){
-    _chartInstances['chartYear'] = new Chart(ctxYear,{
-      type:'bar',
-      data:{
-        labels: years,
-        datasets:[{label:'Papers',data:years.map(y=>yearMap[y]),
-          backgroundColor:'rgba(37,99,235,0.7)',borderColor:'rgba(37,99,235,1)',borderWidth:1,borderRadius:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
-        tooltip:{callbacks:{title:i=>'Año '+i[0].label}}},
-        scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}},
-                x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}}}}
-    });
-  }
-
-  // ── 2. Papers por fuente (donut) ────────────────────────────────
-  const srcMap = {};
-  papers.forEach(p=>{srcMap[p.source]=(srcMap[p.source]||0)+1;});
-  const srcLabels = Object.keys(srcMap);
-  destroyChart('chartSrc');
-  const ctxSrc = document.getElementById('chartSrc');
-  if(ctxSrc && srcLabels.length){
-    _chartInstances['chartSrc'] = new Chart(ctxSrc,{
-      type:'doughnut',
-      data:{
-        labels:srcLabels,
-        datasets:[{data:srcLabels.map(s=>srcMap[s]),
-          backgroundColor:CHART_PALETTE.slice(0,srcLabels.length),
-          borderWidth:2,borderColor:'#fff',hoverOffset:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,plugins:{
-        legend:{position:'right',labels:{font:{size:10},boxWidth:12,padding:8}},
-        tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw}`}}}}
-    });
-  }
-}
-
-function renderGapsChart(papers){
-  const container = document.getElementById('gapsChartRow');
-  if(!container || !papers.length) return;
-  container.style.display = 'grid';
-
-  // ── Top 8 papers por citas (horizontal bar) ──────────────────────
-  const top = [...papers].sort((a,b)=>(b.citations||0)-(a.citations||0)).slice(0,8);
-  destroyChart('chartTopCites');
-  const ctx = document.getElementById('chartTopCites');
-  if(ctx){
-    _chartInstances['chartTopCites'] = new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels: top.map(p=>p.title.slice(0,35)+(p.title.length>35?'…':'')),
-        datasets:[{label:'Citas',data:top.map(p=>p.citations||0),
-          backgroundColor:'rgba(5,150,105,0.7)',borderColor:'rgba(5,150,105,1)',
-          borderWidth:1,borderRadius:4}]
-      },
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}},
-                y:{grid:{display:false},ticks:{font:{size:10},maxTicksLimit:8}}}}
-    });
-  }
-}
-
-function renderOutputCharts(sections, papers){
-  const container = document.getElementById('outputChartsRow');
-  if(!container) return;
-  container.style.display = 'grid';
-  container.style.gridTemplateColumns = '1fr 1fr';
-
-  // ── Distribución de palabras por sección (pie) ───────────────────
-  const labels = Object.keys(sections);
-  const wordCounts = labels.map(k=>sections[k].split(/\s+/).length);
-  destroyChart('chartSections');
-  const ctx2 = document.getElementById('chartSections');
-  if(ctx2 && labels.length){
-    _chartInstances['chartSections'] = new Chart(ctx2,{
-      type:'pie',
-      data:{
-        labels,
-        datasets:[{data:wordCounts,
-          backgroundColor:CHART_PALETTE.slice(0,labels.length),
-          borderWidth:2,borderColor:'#fff',hoverOffset:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,plugins:{
-        legend:{position:'right',labels:{font:{size:9},boxWidth:10,padding:6}},
-        tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw} pal.`}}}}
-    });
-  }
-
-  // ── Open Access ratio (doughnut mini) ────────────────────────────
-  const oaCount = papers.filter(p=>p.oa_status&&p.oa_status!=='closed').length;
-  const closedCount = papers.length - oaCount;
-  destroyChart('chartOA');
-  const ctx3 = document.getElementById('chartOA');
-  if(ctx3 && papers.length){
-    _chartInstances['chartOA'] = new Chart(ctx3,{
-      type:'doughnut',
-      data:{
-        labels:['Open Access','Restringido'],
-        datasets:[{data:[oaCount,closedCount],
-          backgroundColor:['rgba(5,150,105,0.8)','rgba(209,213,219,0.6)'],
-          borderWidth:2,borderColor:'#fff',hoverOffset:4}]
-      },
-      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{
-        legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:6}},
-        tooltip:{callbacks:{label:i=>`${i.label}: ${i.raw}`}}}}
-    });
-  }
-}
 </script>
 
 </body>
