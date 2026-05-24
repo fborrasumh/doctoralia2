@@ -918,6 +918,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 //  ONBOARDING
 // ═══════════════════════════════════════════════════
 let obStep=1;
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 
 
 var _timerInterval=null;
@@ -1200,9 +1202,34 @@ async function callAI(apiKey,messages,maxTokens=1500,temp=0.7,modelOverride=null
 // ═══════════════════════════════════════════════════
 //  SEARCH ENGINES
 // ═══════════════════════════════════════════════════
-async function searchSS(q,max){const p=new URLSearchParams({query:q,limit:Math.min(max,100),offset:0,fields:'paperId,title,abstract,year,authors,venue,citationCount,url,externalIds'});try{const r=await fetch(`https://api.semanticscholar.org/graph/v1/paper/search?${p}`,{headers:{'x-api-key':'uXw4IjvzYg7lLJSR7g3uJ3HQS6rhsgRO6lBbQTWB'}});if(!r.ok)throw new Error('SS '+r.status);return((await r.json()).data||[]).map(p=>({title:p.title||'',authors:(p.authors||[]).slice(0,4).map(a=>a.name),year:String(p.year||''),journal:p.venue||'',abstract:(p.abstract||'').slice(0,500),citations:p.citationCount||0,url:p.url||'',doi:(p.externalIds||{}).DOI||'',source:'Semantic Scholar',oa_status:''}));}catch(e){log('⚠ Semantic Scholar: '+e.message,'warn');return[];}}
 
-async function searchPM(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const sp=new URLSearchParams({db:'pubmed',term:`(${q}) AND (English[Language])`,retmax:max,retmode:'json',tool:'doctoralia',email});const pmids=((await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${sp}`)).json()).esearchresult?.idlist||[]).slice(0,max);if(!pmids.length)return[];const fp=new URLSearchParams({db:'pubmed',id:pmids.join(','),retmode:'json',tool:'doctoralia',email});const res=(await(await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${fp}`)).json()).result||{};return pmids.map(id=>{const a=res[id]||{};return{title:a.title||'',authors:(a.authors||[]).slice(0,4).map(x=>x.name||''),year:(a.pubdate||'').slice(0,4),journal:a.fulljournalname||a.source||'',abstract:'',citations:0,url:`https://pubmed.ncbi.nlm.nih.gov/${id}/`,doi:(a.articleids||[]).find(x=>x.idtype==='doi')?.value||'',source:'PubMed',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ PubMed: '+e.message,'warn');return[];}}
+// Shared fetch with exponential backoff for rate-limited APIs
+async function fetchWithRetry(url, options, retries){
+  retries = retries || 3;
+  var delay = 1000;
+  for(var attempt=0; attempt<retries; attempt++){
+    try{
+      var r = await fetch(url, options||{});
+      if(r.status === 429 || r.status === 503){
+        if(attempt < retries-1){
+          await new Promise(function(res){ setTimeout(res, delay); });
+          delay *= 2;
+          continue;
+        }
+        throw new Error('HTTP '+r.status+' after '+retries+' attempts');
+      }
+      return r;
+    }catch(e){
+      if(attempt === retries-1) throw e;
+      await new Promise(function(res){ setTimeout(res, delay); });
+      delay *= 2;
+    }
+  }
+}
+
+async function searchSS(q,max){const p=new URLSearchParams({query:q,limit:Math.min(max,100),offset:0,fields:'paperId,title,abstract,year,authors,venue,citationCount,url,externalIds'});try{const r=await fetchWithRetry(`https://api.semanticscholar.org/graph/v1/paper/search?${p}`,{headers:{'x-api-key':'uXw4IjvzYg7lLJSR7g3uJ3HQS6rhsgRO6lBbQTWB'}});if(!r.ok)throw new Error('SS '+r.status);return((await r.json()).data||[]).map(p=>({title:p.title||'',authors:(p.authors||[]).slice(0,4).map(a=>a.name),year:String(p.year||''),journal:p.venue||'',abstract:(p.abstract||'').slice(0,500),citations:p.citationCount||0,url:p.url||'',doi:(p.externalIds||{}).DOI||'',source:'Semantic Scholar',oa_status:''}));}catch(e){log('⚠ Semantic Scholar: '+e.message,'warn');return[];}}
+
+async function searchPM(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const sp=new URLSearchParams({db:'pubmed',term:`(${q}) AND (English[Language])`,retmax:max,retmode:'json',tool:'doctoralia',email});const pmids=((await(await fetchWithRetry(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${sp}`)).json()).esearchresult?.idlist||[]).slice(0,max);if(!pmids.length)return[];const fp=new URLSearchParams({db:'pubmed',id:pmids.join(','),retmode:'json',tool:'doctoralia',email});const res=(await(await fetchWithRetry(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${fp}`)).json()).result||{};return pmids.map(id=>{const a=res[id]||{};return{title:a.title||'',authors:(a.authors||[]).slice(0,4).map(x=>x.name||''),year:(a.pubdate||'').slice(0,4),journal:a.fulljournalname||a.source||'',abstract:'',citations:0,url:`https://pubmed.ncbi.nlm.nih.gov/${id}/`,doi:(a.articleids||[]).find(x=>x.idtype==='doi')?.value||'',source:'PubMed',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ PubMed: '+e.message,'warn');return[];}}
 
 async function searchAX(q,max){
   // Multiple CORS proxies to try in order, with delay between retries
@@ -1248,9 +1275,9 @@ async function searchAX(q,max){
   return [];
 }
 
-async function searchOA(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({search:q,per_page:Math.min(max,200),page:1,select:'id,title,abstract_inverted_index,publication_year,authorships,primary_location,cited_by_count,doi,open_access',mailto:email});const r=await fetch(`https://api.openalex.org/works?${p}`);if(!r.ok)throw new Error('OA '+r.status);return((await r.json()).results||[]).map(w=>{let abstract='';try{if(w.abstract_inverted_index){const pos=[];Object.entries(w.abstract_inverted_index).forEach(([word,positions])=>positions.forEach(p=>pos.push([p,word])));abstract=pos.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').slice(0,500);}}catch(e){}return{title:w.title||'',authors:(w.authorships||[]).slice(0,4).map(a=>a.author?.display_name||''),year:String(w.publication_year||''),journal:w.primary_location?.source?.display_name||'',abstract,citations:w.cited_by_count||0,url:w.id||'',doi:(w.doi||'').replace('https://doi.org/',''),source:'OpenAlex',oa_status:w.open_access?.oa_status||''};}).filter(p=>p.title);}catch(e){log('⚠ OpenAlex: '+e.message,'warn');return[];}}
+async function searchOA(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({search:q,per_page:Math.min(max,200),page:1,select:'id,title,abstract_inverted_index,publication_year,authorships,primary_location,cited_by_count,doi,open_access',mailto:email});const r=await fetchWithRetry(`https://api.openalex.org/works?${p}`);if(!r.ok)throw new Error('OA '+r.status);return((await r.json()).results||[]).map(w=>{let abstract='';try{if(w.abstract_inverted_index){const pos=[];Object.entries(w.abstract_inverted_index).forEach(([word,positions])=>positions.forEach(p=>pos.push([p,word])));abstract=pos.sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').slice(0,500);}}catch(e){}return{title:w.title||'',authors:(w.authorships||[]).slice(0,4).map(a=>a.author?.display_name||''),year:String(w.publication_year||''),journal:w.primary_location?.source?.display_name||'',abstract,citations:w.cited_by_count||0,url:w.id||'',doi:(w.doi||'').replace('https://doi.org/',''),source:'OpenAlex',oa_status:w.open_access?.oa_status||''};}).filter(p=>p.title);}catch(e){log('⚠ OpenAlex: '+e.message,'warn');return[];}}
 
-async function searchEPMC(q,max){try{const p=new URLSearchParams({query:q,format:'json',pageSize:Math.min(max,100),resultType:'core',sort:'CITED desc'});const r=await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?${p}`);if(!r.ok)throw new Error('EPMC '+r.status);return(((await r.json()).resultList||{}).result||[]).map(a=>({title:a.title||'',authors:(a.authorString||'').split(',').slice(0,4).map(s=>s.trim()),year:String(a.pubYear||''),journal:a.journalTitle||'',abstract:(a.abstractText||'').slice(0,500),citations:a.citedByCount||0,url:a.pmid?`https://europepmc.org/article/MED/${a.pmid}`:(a.doi?`https://doi.org/${a.doi}`:''),doi:a.doi||'',source:'Europe PMC',oa_status:a.inEPMC==='Y'?'open':''})).filter(p=>p.title);}catch(e){log('⚠ EuropePMC: '+e.message,'warn');return[];}}
+async function searchEPMC(q,max){try{const p=new URLSearchParams({query:q,format:'json',pageSize:Math.min(max,100),resultType:'core',sort:'CITED desc'});const r=await fetchWithRetry(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?${p}`);if(!r.ok)throw new Error('EPMC '+r.status);return(((await r.json()).resultList||{}).result||[]).map(a=>({title:a.title||'',authors:(a.authorString||'').split(',').slice(0,4).map(s=>s.trim()),year:String(a.pubYear||''),journal:a.journalTitle||'',abstract:(a.abstractText||'').slice(0,500),citations:a.citedByCount||0,url:a.pmid?`https://europepmc.org/article/MED/${a.pmid}`:(a.doi?`https://doi.org/${a.doi}`:''),doi:a.doi||'',source:'Europe PMC',oa_status:a.inEPMC==='Y'?'open':''})).filter(p=>p.title);}catch(e){log('⚠ EuropePMC: '+e.message,'warn');return[];}}
 
 async function searchCR(q,max){const email=document.getElementById('pubmedEmail')?.value||'doctoralia@app.io';try{const p=new URLSearchParams({query:q,rows:Math.min(max,100),select:'DOI,title,author,published,container-title,abstract,is-referenced-by-count,URL',mailto:email});const r=await fetch(`https://api.crossref.org/works?${p}`);if(!r.ok)throw new Error('CR '+r.status);return(((await r.json()).message||{}).items||[]).map(w=>{const year=w.published?.['date-parts']?.[0]?.[0]||'';const doi=w.DOI||'';return{title:(Array.isArray(w.title)?w.title[0]:w.title)||'',authors:(w.author||[]).slice(0,4).map(a=>`${a.family||''} ${(a.given||'')[0]||''}`.trim()),year:String(year),journal:(Array.isArray(w['container-title'])?w['container-title'][0]:w['container-title'])||'',abstract:(w.abstract||'').replace(/<[^>]+>/g,'').slice(0,500),citations:w['is-referenced-by-count']||0,url:doi?`https://doi.org/${doi}`:'',doi,source:'CrossRef',oa_status:''};}).filter(p=>p.title);}catch(e){log('⚠ CrossRef: '+e.message,'warn');return[];}}
 
@@ -1326,7 +1353,7 @@ function renderHistory(){
     if(!hist.length){area.innerHTML='<div class="placeholder"><div class="bi">🕓</div><p>Aún no hay revisiones guardadas.</p></div>';return;}
     area.innerHTML=hist.map((h,i)=>`<div class="hist-card fi">
       <div class="hist-info">
-        <div class="hist-title">${h.topic||'Sin título'}</div>
+        <div class="hist-title">${esc(h.topic||'Sin título')}</div>
         <div class="hist-meta">${new Date(h.ts).toLocaleDateString('es')} · ${(h.wordCount||0).toLocaleString()} palabras · ${h.sections||0} secciones · ${h.time||'?'}</div>
       </div>
       <div class="hist-actions">
@@ -1377,7 +1404,7 @@ function downloadHistory(i){
   try{const hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');const h=hist[i];if(!h)return;generatedText=h.text||'';exportMarkdown();}catch(e){}
 }
 function deleteHistory(i){
-  try{let hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');hist.splice(i,1);localStorage.setItem('doctoralia_history',JSON.stringify(hist));renderHistory();}catch(e){}
+  try{let hist=JSON.parse(localStorage.getItem('doctoralia_history')||'[]');hist.splice(i,1);localStorage.setItem('doctoralia_history',JSON.stringify(hist));renderHistory();}catch(e){log('⚠ Error borrando historial: '+e.message,'warn');}
 }
 function clearHistory(){localStorage.removeItem('doctoralia_history');renderHistory();}
 
@@ -1438,7 +1465,7 @@ function liveAppendSection(title, content){
   block.id='live-sec-'+title.replace(/\s+/g,'_');
   block.innerHTML=`
     <div class="section-header" onclick="toggleSection(this)">
-      <span class="section-title-text">📄 ${title}</span>
+      <span class="section-title-text">📄 ${esc(title)}</span>
       <div class="section-actions">
         <span style="font-size:12px;color:var(--t3)">${content.split(/\s+/).length} palabras</span>
         <span style="color:var(--t3);font-size:12px">▼</span>
@@ -1480,7 +1507,7 @@ function buildTOC(sections){
     var words=(sections[title]||'').split(/\s+/).filter(Boolean).length;
     var item=document.createElement('div');
     item.className='toc-item';
-    item.innerHTML='<div class="toc-dot"></div><span class="toc-item-title">'+title+'</span><span class="toc-item-words">'+words+' pal.</span>';
+    item.innerHTML='<div class="toc-dot"></div><span class="toc-item-title">'+esc(title)+'</span><span class="toc-item-words">'+words+' pal.</span>';
     item.addEventListener('click', function(){ scrollToSection(title); });
     list.appendChild(item);
   });
@@ -1559,7 +1586,7 @@ function renderOutputSections(sections,papers,gaps,meta){
     const block=document.createElement('div');block.className='section-block';
     block.innerHTML=`
       <div class="section-header" onclick="toggleSection(this)">
-        <span class="section-title-text">📄 ${title}</span>
+        <span class="section-title-text">📄 ${esc(title)}</span>
         <div class="section-actions" onclick="event.stopPropagation()">
           <div class="sec-view-toggle">
             <button class="sec-view-btn active" data-mode="read" onclick="toggleSectionView(this,'read')">👁 Leer</button>
@@ -1596,7 +1623,7 @@ function renderOutputSections(sections,papers,gaps,meta){
   // References
   if(papers.length){
     const refBlock=document.createElement('div');refBlock.className='section-block';
-    refBlock.innerHTML=`<div class="section-header"><span class="section-title-text">📚 Referencias (${papers.length})</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body" style="padding:12px 16px;font-size:12px;color:var(--t2);line-height:1.8">${papers.slice(0,40).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'<a href="https://doi.org/'+p.doi+'" target="_blank" style="color:var(--accent)">DOI</a>':''} ${p.oa_status?'<span style="color:var(--teal);font-size:10px">✅ '+p.oa_status+'</span>':''}<br>`;}).join('')}</div>`;
+    refBlock.innerHTML=`<div class="section-header"><span class="section-title-text">📚 Referencias (${papers.length})</span><span style="font-size:12px;color:var(--t3)">▼</span></div><div class="section-body" style="padding:12px 16px;font-size:12px;color:var(--t2);line-height:1.8">${papers.slice(0,40).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a||'Unknown'}. "${esc(p.title)}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'<a href="https://doi.org/'+p.doi+'" target="_blank" style="color:var(--accent)">DOI</a>':''} ${p.oa_status?'<span style="color:var(--teal);font-size:10px">✅ '+p.oa_status+'</span>':''}<br>`;}).join('')}</div>`;
     container.appendChild(refBlock);
   }
 
@@ -1861,7 +1888,7 @@ async function startGeneration(){
     if(!fastMode){
       setPhase(4,'active');setHPStep(4);
       log('🔍 ── FASE 4: VALIDATION ─────────────────────','info');
-      const refs=allPapers.slice(0,30).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a}. "${p.title}". ${p.journal||''}, ${p.year||''}.`;}).join('\n');
+      const refs=allPapers.slice(0,30).map((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');return`[${i+1}] ${a}. "${esc(p.title)}". ${p.journal||''}, ${p.year||''}.`;}).join('\n');
       const fullText=Object.values(sectionTexts).join('\n\n');
       const chunks=[];for(let i=0;i<fullText.length;i+=5000)chunks.push(fullText.slice(i,i+5000));
       for(let i=0;i<Math.min(chunks.length,3);i++){
@@ -1921,7 +1948,7 @@ async function startGeneration(){
     full+=`*Fuentes: ${srcList2} · Papers: ${allPapers.length} · Tiempo: ${elapsed}s · Score: ${qs}*\n\n---\n\n`;
     Object.entries(displaySections).forEach(([sec,txt])=>{full+=`## ${sec}\n\n${txt}\n\n`;});
     full+=`---\n\n## References\n\n`;
-    allPapers.slice(0,40).forEach((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');full+=`[${i+1}] ${a||'Unknown'}. "${p.title}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'DOI: https://doi.org/'+p.doi:p.url||''} ${p.oa_status?'[OA: '+p.oa_status+']':''}\n`;});
+    allPapers.slice(0,40).forEach((p,i)=>{const a=p.authors.slice(0,3).join(', ')+(p.authors.length>3?' et al.':'');full+=`[${i+1}] ${a||'Unknown'}. "${esc(p.title)}". ${p.journal||''}${p.year?', '+p.year:''}. ${p.doi?'DOI: https://doi.org/'+p.doi:p.url||''} ${p.oa_status?'[OA: '+p.oa_status+']':''}\n`;});
     full+=`\n---\n\n## Appendix: Paper Database (${allPapers.length} papers)\n\n`;
     full+=`| # | Title | Authors | Year | Source | Cites | OA | URL |\n|---|-------|---------|------|--------|-------|----|-----|\n`;
     allPapers.forEach((p,i)=>{const a=p.authors.slice(0,2).join(', ')+(p.authors.length>2?'...':'');const u=p.url?`[link](${p.url})`:'—';full+=`| ${i+1} | ${p.title.slice(0,50).replace(/\|/g,'/')} | ${a||'—'} | ${p.year||'—'} | ${p.source} | ${p.citations} | ${p.oa_status||'—'} | ${u} |\n`;});
@@ -2034,7 +2061,7 @@ async function searchScopus(q, max){
   try{
     const encoded = encodeURIComponent(q);
     const url = `https://api.elsevier.com/content/search/scopus?query=${encoded}&count=${Math.min(max,25)}&field=dc:title,dc:creator,prism:publicationName,prism:coverDate,citedby-count,prism:doi,dc:description,prism:url&apiKey=${devKey}&httpAccept=application/json`;
-    const r = await fetch(url, {headers:{'Accept':'application/json','X-ELS-APIKey': devKey}});
+    const r = await fetchWithRetry(url, {headers:{'Accept':'application/json','X-ELS-APIKey': devKey}});
     if(!r.ok) throw new Error('Scopus HTTP '+r.status);
     const data = await r.json();
     const entries = data?.['search-results']?.entry || [];
@@ -2068,12 +2095,7 @@ async function searchScopus(q, max){
 //  EXPORT
 // ═══════════════════════════════════════════════════
 </script>
-<script>
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  SCOPUS SEARCH ENGINE                                          ║
-// ╚══════════════════════════════════════════════════════════════════╝
 
-</script>
 
 </body>
 </html>
